@@ -1,0 +1,6 @@
+FROM golang:1.4
+RUN go get github.com/tools/godep
+ENV DAPPER_SOURCE /go/src/github.com/ibuildthecloud/dapper
+ENV DAPPER_OUTPUT bin
+WORKDIR ${DAPPER_SOURCE}
+ENTRYPOINT ["./script/build"]
