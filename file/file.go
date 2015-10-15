@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/pkg/term"
 )
 
 type Dapperfile struct {
@@ -90,7 +91,11 @@ func (d *Dapperfile) Shell(mode string, commandArgs []string) error {
 func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, []string) {
 	name := fmt.Sprintf("%s-%s", strings.Split(tag, ":")[0], randString())
 
-	args := []string{"-it", "--name", name}
+	args := []string{"-i", "--name", name}
+
+	if term.IsTerminal(0) {
+		args = append(args, "-t")
+	}
 
 	if d.env.Socket() {
 		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
