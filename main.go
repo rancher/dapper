@@ -26,6 +26,10 @@ func main() {
 			Value: "Dockerfile.dapper",
 			Usage: "Dockerfile to build from",
 		},
+		cli.BoolFlag{
+			Name:  "socket, k",
+			Usage: "Bind in the Docker socket",
+		},
 		cli.StringFlag{
 			Name:   "mode, m",
 			Value:  "auto",
@@ -61,6 +65,7 @@ func run(c *cli.Context) error {
 	dir := c.String("directory")
 	mode := c.String("mode")
 	shell := c.Bool("shell")
+	socket := c.Bool("socket")
 
 	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("Failed to change to directory %s: %v", dir, err)
@@ -70,6 +75,8 @@ func run(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	dapperFile.SetSocket(socket)
 
 	if shell {
 		return dapperFile.Shell(mode, c.Args())
