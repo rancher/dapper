@@ -18,6 +18,7 @@ type Dapperfile struct {
 	mode   string
 	docker string
 	env    Context
+	socket bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -30,6 +31,10 @@ func Lookup(file string) (*Dapperfile, error) {
 	}
 
 	return d, d.init()
+}
+
+func (d *Dapperfile) SetSocket(val bool) {
+	d.socket = val
 }
 
 func (d *Dapperfile) init() error {
@@ -97,7 +102,7 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 		args = append(args, "-t")
 	}
 
-	if d.env.Socket() {
+	if d.env.Socket() || d.socket {
 		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
 	}
 
