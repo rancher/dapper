@@ -180,9 +180,12 @@ func (d *Dapperfile) buildWithContent(tag, content string) error {
 func (d *Dapperfile) readEnv(tag string) error {
 	var envList []string
 
-	cmd := exec.Command(d.docker, "inspect", "--type=image", "-f", "{{json .ContainerConfig.Env}}", tag)
+	args := []string{"inspect", "-f", "{{json .ContainerConfig.Env}}", tag}
+
+	cmd := exec.Command(d.docker, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		logrus.Errorf("Failed to run docker %v: %v", args, err)
 		return err
 	}
 
@@ -236,7 +239,11 @@ func (d *Dapperfile) exec(args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	return cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		logrus.Debugf("Failed running %s %v: %v", d.docker, args, err)
+	}
+	return err
 }
 
 func (d *Dapperfile) execWithOutput(args ...string) ([]byte, error) {
