@@ -4,5 +4,5 @@ set -e
 cd $(dirname $0)/..
 
 mkdir -p bin
-godep go build -o bin/dapper main.go
+go build -o bin/dapper main.go
 echo Built ./bin/dapper

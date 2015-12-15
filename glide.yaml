@@ -1,0 +1,11 @@
+package: github.com/ibuildthecloud/dapper
+
+import:
+- package: github.com/Sirupsen/logrus
+  version: v0.8.7
+
+- package: github.com/codegangsta/cli
+  version: b5232bb2934f606f9f27a1305f1eea224e8e8b88
+
+- package: github.com/docker/docker
+  version: v1.9.1

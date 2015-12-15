@@ -1,5 +1,5 @@
-FROM golang:1.5.1
-RUN go get github.com/tools/godep
+FROM golang:1.5.2
+ENV GO15VENDOREXPERIMENT 1
 ENV DAPPER_SOURCE /go/src/github.com/ibuildthecloud/dapper
 ENV DAPPER_OUTPUT bin
 WORKDIR ${DAPPER_SOURCE}
