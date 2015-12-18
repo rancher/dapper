@@ -19,6 +19,7 @@ type Dapperfile struct {
 	docker string
 	env    Context
 	socket bool
+	noOut  bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -35,6 +36,10 @@ func Lookup(file string) (*Dapperfile, error) {
 
 func (d *Dapperfile) SetSocket(val bool) {
 	d.socket = val
+}
+
+func (d *Dapperfile) SetNoOut(val bool) {
+	d.noOut = val
 }
 
 func (d *Dapperfile) init() error {
@@ -66,7 +71,7 @@ func (d *Dapperfile) Run(mode string, commandArgs []string) error {
 	}
 
 	output := d.env.Output()
-	if !d.IsBind() {
+	if !d.IsBind() && !d.noOut {
 		for _, i := range output {
 			logrus.Infof("docker cp %s .", i)
 			if err := d.exec("cp", name+":"+i, "."); err != nil {

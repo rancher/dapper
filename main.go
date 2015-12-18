@@ -17,7 +17,7 @@ func main() {
 	}
 
 	app := cli.NewApp()
-	app.Author = "@ibuildthecloud"
+	app.Author = "@ibuildthecloud, @imikushin"
 	app.EnableBashCompletion = true
 	app.Usage = "Docker build wrapper"
 	app.Flags = []cli.Flag{
@@ -35,6 +35,10 @@ func main() {
 			Value:  "auto",
 			Usage:  "Execution mode for Dapper bind/cp/auto",
 			EnvVar: "DAPPER_MODE",
+		},
+		cli.BoolFlag{
+			Name:  "no-out, O",
+			Usage: "Do not copy the output back (in --mode cp)",
 		},
 		cli.StringFlag{
 			Name:  "directory, C",
@@ -66,6 +70,7 @@ func run(c *cli.Context) error {
 	mode := c.String("mode")
 	shell := c.Bool("shell")
 	socket := c.Bool("socket")
+	noOut := c.Bool("no-out")
 
 	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("Failed to change to directory %s: %v", dir, err)
@@ -77,6 +82,7 @@ func run(c *cli.Context) error {
 	}
 
 	dapperFile.SetSocket(socket)
+	dapperFile.SetNoOut(noOut)
 
 	if shell {
 		return dapperFile.Shell(mode, c.Args())
