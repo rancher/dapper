@@ -225,13 +225,13 @@ func (d *Dapperfile) tag() string {
 		cwd = "dapper-unknown"
 	}
 
-	output, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").CombinedOutput()
-
-	if err != nil {
-		return cwd
+	output, _ := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+	tag := strings.TrimSpace(string(output))
+	if tag == "" {
+		tag = randString()
 	}
 
-	return fmt.Sprintf("%s:%s", cwd, strings.TrimSpace(string(output)))
+	return fmt.Sprintf("%s:%s", cwd, tag)
 }
 
 func (d *Dapperfile) run(args ...string) error {
