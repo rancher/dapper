@@ -1,11 +1,18 @@
 package file
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func randString() string {
-	b := make([]rune, 7)
+	b := make([]byte, 7)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
