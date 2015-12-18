@@ -67,10 +67,7 @@ func run(c *cli.Context) error {
 	}
 
 	dir := c.String("directory")
-	mode := c.String("mode")
 	shell := c.Bool("shell")
-	socket := c.Bool("socket")
-	noOut := c.Bool("no-out")
 
 	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("Failed to change to directory %s: %v", dir, err)
@@ -81,12 +78,13 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	dapperFile.SetSocket(socket)
-	dapperFile.SetNoOut(noOut)
+	dapperFile.Mode = c.String("mode")
+	dapperFile.Socket = c.Bool("socket")
+	dapperFile.NoOut = c.Bool("no-out")
 
 	if shell {
-		return dapperFile.Shell(mode, c.Args())
+		return dapperFile.Shell(c.Args())
 	}
 
-	return dapperFile.Run(mode, c.Args())
+	return dapperFile.Run(c.Args())
 }
