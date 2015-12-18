@@ -3,7 +3,6 @@ package file
 import (
 	"os"
 	"path"
-	"runtime"
 	"strings"
 )
 
@@ -37,17 +36,10 @@ func (c Context) Socket() bool {
 }
 
 func (c Context) Mode(mode string) string {
-	if mode == "cp" {
-		return "cp"
-	} else if mode == "bind" {
-		return "bind"
+	switch mode {
+	case "cp", "bind":
+		return mode
 	}
-
-	host := os.Getenv("DOCKER_HOST")
-	if strings.HasPrefix(host, "unix://") || (host == "" && runtime.GOOS != "window") {
-		return "bind"
-	}
-
 	return "cp"
 }
 
