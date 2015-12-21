@@ -1,5 +1,5 @@
 clone:
-  path: github.com/ibuildthecloud/dapper
+  path: github.com/rancher/dapper
 build:
   image: rancher/dapper:1.9.1
   volumes:

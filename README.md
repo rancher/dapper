@@ -5,7 +5,7 @@ Dapper is a tool to wrap any existing build tool in an consistent environment.  
 ## Installation
 
 ```sh
-go get github.com/ibuildthecloud/dapper
+go get github.com/rancher/dapper
 ```
 
 ## Example
@@ -13,8 +13,8 @@ go get github.com/ibuildthecloud/dapper
 Dapper is built using dapper so the following is a decent example
 
 ```sh
-go get github.com/ibuildthecloud/dapper
-git clone https://github.com/ibuildthecloud/dapper.git
+go get github.com/rancher/dapper
+git clone https://github.com/rancher/dapper.git
 cd dapper
 dapper
 ```
@@ -24,7 +24,7 @@ This is the `Dockerfile.dapper` used
 ```Dockerfile
 FROM golang:1.4
 RUN go get github.com/tools/godep
-ENV DAPPER_SOURCE /go/src/github.com/ibuildthecloud/dapper
+ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper
 ENV DAPPER_OUTPUT bin
 WORKDIR ${DAPPER_SOURCE}
 ENTRYPOINT ["./script/build"]
@@ -56,7 +56,7 @@ Configuring the behavior of Dapper is done through ENV variables in the `Dockerf
 
 ### DAPPER_SOURCE
 
-`DAPPER_SOURCE` is the location in the container of where your source should be.  For go applications this might look like `ENV DAPPER_SOURCE /go/src/github.com/ibuildthecloud/dapper`
+`DAPPER_SOURCE` is the location in the container of where your source should be.  For go applications this might look like `ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper`
 
 In bind mode `DAPPER_SOURCE` is used in the Docker `run` command as follows
 

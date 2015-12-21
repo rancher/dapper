@@ -1,6 +1,6 @@
 FROM golang:1.5.2
 ENV GO15VENDOREXPERIMENT 1
-ENV DAPPER_SOURCE /go/src/github.com/ibuildthecloud/dapper
+ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper
 ENV DAPPER_OUTPUT bin
 WORKDIR ${DAPPER_SOURCE}
 ENTRYPOINT ["./script/build"]

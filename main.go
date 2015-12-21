@@ -6,7 +6,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"github.com/ibuildthecloud/dapper/file"
+	"github.com/rancher/dapper/file"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	app := cli.NewApp()
-	app.Author = "@ibuildthecloud, @imikushin"
+	app.Author = "Rancher Labs"
 	app.EnableBashCompletion = true
 	app.Usage = `Docker build wrapper
 
