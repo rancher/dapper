@@ -1,4 +1,4 @@
-package: github.com/ibuildthecloud/dapper
+package: github.com/rancher/dapper
 
 import:
 - package: github.com/Sirupsen/logrus
