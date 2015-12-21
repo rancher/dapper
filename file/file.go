@@ -15,11 +15,11 @@ import (
 
 type Dapperfile struct {
 	File   string
-	mode   string
+	Mode   string
 	docker string
 	env    Context
-	socket bool
-	noOut  bool
+	Socket bool
+	NoOut  bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -34,14 +34,6 @@ func Lookup(file string) (*Dapperfile, error) {
 	return d, d.init()
 }
 
-func (d *Dapperfile) SetSocket(val bool) {
-	d.socket = val
-}
-
-func (d *Dapperfile) SetNoOut(val bool) {
-	d.noOut = val
-}
-
 func (d *Dapperfile) init() error {
 	docker, err := exec.LookPath("docker")
 	if err != nil {
@@ -51,9 +43,7 @@ func (d *Dapperfile) init() error {
 	return nil
 }
 
-func (d *Dapperfile) Run(mode string, commandArgs []string) error {
-	d.mode = mode
-
+func (d *Dapperfile) Run(commandArgs []string) error {
 	tag, err := d.build()
 	if err != nil {
 		return err
@@ -71,7 +61,7 @@ func (d *Dapperfile) Run(mode string, commandArgs []string) error {
 	}
 
 	output := d.env.Output()
-	if !d.IsBind() && !d.noOut {
+	if !d.IsBind() && !d.NoOut {
 		for _, i := range output {
 			logrus.Infof("docker cp %s .", i)
 			if err := d.exec("cp", name+":"+i, "."); err != nil {
@@ -83,9 +73,7 @@ func (d *Dapperfile) Run(mode string, commandArgs []string) error {
 	return nil
 }
 
-func (d *Dapperfile) Shell(mode string, commandArgs []string) error {
-	d.mode = mode
-
+func (d *Dapperfile) Shell(commandArgs []string) error {
 	tag, err := d.build()
 	if err != nil {
 		return err
@@ -107,7 +95,7 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 		args = append(args, "-t")
 	}
 
-	if d.env.Socket() || d.socket {
+	if d.env.Socket() || d.Socket {
 		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
 	}
 
@@ -210,7 +198,7 @@ func (d *Dapperfile) readEnv(tag string) error {
 	logrus.Debugf("Source: %s", d.env.Source())
 	logrus.Debugf("Cp: %s", d.env.Cp())
 	logrus.Debugf("Socket: %t", d.env.Socket())
-	logrus.Debugf("Mode: %s", d.env.Mode(d.mode))
+	logrus.Debugf("Mode: %s", d.env.Mode(d.Mode))
 	logrus.Debugf("Env: %v", d.env.Env())
 	logrus.Debugf("Output: %v", d.env.Output())
 
@@ -257,5 +245,5 @@ func (d *Dapperfile) execWithOutput(args ...string) ([]byte, error) {
 }
 
 func (d *Dapperfile) IsBind() bool {
-	return d.env.Mode(d.mode) == "bind"
+	return d.env.Mode(d.Mode) == "bind"
 }
