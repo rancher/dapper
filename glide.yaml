@@ -9,3 +9,6 @@ import:
 
 - package: github.com/docker/docker
   version: v1.9.1
+
+- package: github.com/Azure/go-ansiterm
+  version: 70b2c90b260171e829f1ebd7c17f600c11858dbe
