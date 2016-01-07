@@ -1,7 +1,6 @@
 package file
 
 import (
-	"os"
 	"path"
 	"strings"
 )
@@ -62,17 +61,10 @@ func (c Context) Env() []string {
 }
 
 func (c Context) Shell() string {
-	shell := os.Getenv("SHELL")
-
-	if v, ok := c["SHELL"]; ok && v != "" {
-		return v
+	if shell, ok := c["SHELL"]; ok && shell != "" {
+		return shell
 	}
-
-	if shell == "" {
-		return "/bin/bash"
-	}
-
-	return shell
+	return "/bin/bash"
 }
 
 func (c Context) Output() []string {
