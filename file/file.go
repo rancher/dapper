@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
@@ -83,7 +84,7 @@ func (d *Dapperfile) Shell(commandArgs []string) error {
 	_, args := d.runArgs(tag, d.env.Shell(), nil)
 	args = append([]string{"--rm"}, args...)
 
-	return d.run(args...)
+	return d.runExec(args...)
 }
 
 func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, []string) {
@@ -237,6 +238,11 @@ func (d *Dapperfile) exec(args ...string) error {
 		logrus.Debugf("Failed running %s %v: %v", d.docker, args, err)
 	}
 	return err
+}
+
+func (d *Dapperfile) runExec(args ...string) error {
+	logrus.Debugf("Exec %s run %v", d.docker, args)
+	return syscall.Exec(d.docker, append([]string{"docker", "run"}, args...), os.Environ())
 }
 
 func (d *Dapperfile) execWithOutput(args ...string) ([]byte, error) {
