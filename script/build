@@ -3,15 +3,25 @@ set -ex
 
 cd $(dirname $0)/..
 
-mkdir -p bin
-if [ "$CROSS" = 1 ]; then
-    GOOS=darwin go build -o ./bin/dapper-Darwin-x86_64 main.go
-    GOOS=windows go build -o ./bin/dapper-Windows-x86_64.exe main.go
-    go build -a -tags netgo -installsuffix netgo -ldflags '-linkmode external -extldflags -static' -o ./bin/dapper-Linux-x86_64 main.go
-    strip --strip-all ./bin/dapper-Linux-x86_64
-else
-    go build -a -tags netgo -installsuffix netgo -ldflags '-linkmode external -extldflags -static' -o ./bin/dapper main.go
-    strip --strip-all ./bin/dapper
+VERSION=$(git tag -l --contains HEAD | head -n 1)
+if [ -z "$VERSION" ]; then
+    VERSION=$(git rev-parse --short HEAD)
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        VERSION="$VERSION-dirty"
+    fi
 fi
 
-echo Built ./bin/dapper
+mkdir -p bin
+
+if [ "$CROSS" = 1 ]; then
+    GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-x86_64 main.go
+    GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
+    go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper-Linux-x86_64 main.go
+    strip --strip-all ./bin/dapper-Linux-x86_64
+    echo Built ./bin/dapper-Linux-x86_64
+else
+    go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper main.go
+    strip --strip-all ./bin/dapper
+    echo Built ./bin/dapper
+fi
+

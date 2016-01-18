@@ -1,6 +1,6 @@
 # Dapper - Docker Build Wrapper
 
-Dapper is a tool to wrap any existing build tool in an consistent environment.  This allows people to build your software from source or modify it without worry about setting up a build environment.  The approach is very simple and taken from a common pattern that has adopted by many open source projects.  Create a file called `Dockerfile.dapper` in the root of your repository.  Dapper will build that Dockerfile and then execute a container based off of the resulting image.  Dapper will also copy in source files and copy out resulting artifacts or will use bind mounting if it is possible.
+Dapper is a tool to wrap any existing build tool in an consistent environment.  This allows people to build your software from source or modify it without worry about setting up a build environment.  The approach is very simple and taken from a common pattern that has adopted by many open source projects.  Create a file called `Dockerfile.dapper` in the root of your repository.  Dapper will build that Dockerfile and then execute a container based off of the resulting image.  Dapper will also copy in source files and copy out resulting artifacts or will use bind mounting if you choose.
 
 ## Installation
 
@@ -47,7 +47,7 @@ The `ENTRYPOINT`, `CMD`, and `WORKDIR` defined in `Dockerfile.dapper` are what a
 
 ### Dapper Modes: Bind mount or CP
 
-Dapper runs in two modes `bind` or `cp`, meaning bind mount in the source or cp in the source.  Depending on your environment one or the other could be preferred.  If your host is Linux bind mounting is typically preferred because it is very fast.  If you are running on Mac, Windows, or with a remote Docker daemon, CP is usually your only option.  Dapper will try to choose the correct mode for you.  Basically bind mode is only used on Linux when you have an empty `DOCKER_HOST` or your `DOCKER_HOST` starts with `unix://`.  You can force a specific mode with
+Dapper runs in two modes `bind` or `cp`, meaning bind mount in the source or cp in the source.  Depending on your environment one or the other could be preferred.  If your host is Linux bind mounting is typically preferred because it is very fast.  If you are running on Mac, Windows, or with a remote Docker daemon, CP is usually your only option.  You can force a specific mode with
 
     dapper --mode|m MODE
 
