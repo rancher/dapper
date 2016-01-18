@@ -9,6 +9,10 @@ import (
 	"github.com/rancher/dapper/file"
 )
 
+var (
+	VERSION = "0.0.0"
+)
+
 func main() {
 	exit := func(err error) {
 		if err != nil {
@@ -19,6 +23,7 @@ func main() {
 	app := cli.NewApp()
 	app.Author = "Rancher Labs"
 	app.EnableBashCompletion = true
+	app.Version = VERSION
 	app.Usage = `Docker build wrapper
 
 	Dockerfile variables
