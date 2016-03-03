@@ -12,6 +12,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
+	"path"
 )
 
 type Dapperfile struct {
@@ -61,12 +62,21 @@ func (d *Dapperfile) Run(commandArgs []string) error {
 		return err
 	}
 
+	source := d.env.Source()
 	output := d.env.Output()
 	if !d.IsBind() && !d.NoOut {
 		for _, i := range output {
-			logrus.Infof("docker cp %s .", i)
-			if err := d.exec("cp", name+":"+i, "."); err != nil {
+			p := i
+			if !strings.HasPrefix(p, "/") {
+				p = path.Join(source, i)
+			}
+			targetDir := path.Dir(i)
+			if err := os.MkdirAll(targetDir, 0755); err != nil {
 				return err
+			}
+			logrus.Infof("docker cp %s %s", p, targetDir)
+			if err := d.exec("cp", name+":"+p, targetDir); err != nil {
+				logrus.Debugf("Error copying back '%s': %s", i, err)
 			}
 		}
 	}

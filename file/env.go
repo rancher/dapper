@@ -1,7 +1,6 @@
 package file
 
 import (
-	"path"
 	"strings"
 )
 
@@ -68,17 +67,12 @@ func (c Context) Shell() string {
 }
 
 func (c Context) Output() []string {
-	source := c.Source()
 	if v, ok := c["DAPPER_OUTPUT"]; ok {
 		ret := []string{}
 		for _, i := range strings.Split(v, " ") {
 			i = strings.TrimSpace(i)
 			if i != "" {
-				if strings.HasPrefix(i, "/") {
-					ret = append(ret, i)
-				} else {
-					ret = append(ret, path.Join(source, i))
-				}
+				ret = append(ret, i)
 			}
 		}
 		return ret
