@@ -1,2 +1,2 @@
-FROM docker:1.9.1
+FROM docker:1.10.2
 COPY bin/dapper /usr/local/bin/
