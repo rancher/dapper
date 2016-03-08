@@ -7,9 +7,11 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/Azure/go-ansiterm/winterm"
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/term/windows"
 )
 
@@ -30,14 +32,70 @@ type Winsize struct {
 func StdStreams() (stdIn io.ReadCloser, stdOut, stdErr io.Writer) {
 	switch {
 	case os.Getenv("ConEmuANSI") == "ON":
-		// The ConEmu shell emulates ANSI well by default.
-		return os.Stdin, os.Stdout, os.Stderr
+		// The ConEmu terminal emulates ANSI on output streams well.
+		return windows.ConEmuStreams()
 	case os.Getenv("MSYSTEM") != "":
 		// MSYS (mingw) does not emulate ANSI well.
 		return windows.ConsoleStreams()
 	default:
+		if useNativeConsole() {
+			return os.Stdin, os.Stdout, os.Stderr
+		}
 		return windows.ConsoleStreams()
 	}
+}
+
+// useNativeConsole determines if the docker client should use the built-in
+// console which supports ANSI emulation, or fall-back to the golang emulator
+// (github.com/azure/go-ansiterm).
+func useNativeConsole() bool {
+	osv, err := system.GetOSVersion()
+	if err != nil {
+		return false
+	}
+
+	// Native console is not available major version 10
+	if osv.MajorVersion < 10 {
+		return false
+	}
+
+	// Must have a late pre-release TP4 build of Windows Server 2016/Windows 10 TH2 or later
+	if osv.Build < 10578 {
+		return false
+	}
+
+	// Environment variable override
+	if e := os.Getenv("USE_NATIVE_CONSOLE"); e != "" {
+		if e == "1" {
+			return true
+		}
+		return false
+	}
+
+	// Get the handle to stdout
+	stdOutHandle, err := syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
+	if err != nil {
+		return false
+	}
+
+	// Get the console mode from the consoles stdout handle
+	var mode uint32
+	if err := syscall.GetConsoleMode(stdOutHandle, &mode); err != nil {
+		return false
+	}
+
+	// Legacy mode does not have native ANSI emulation.
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/ms683167(v=vs.85).aspx
+	const enableVirtualTerminalProcessing = 0x0004
+	if mode&enableVirtualTerminalProcessing == 0 {
+		return false
+	}
+
+	// TODO Windows (Post TP4). The native emulator still has issues which
+	// mean it shouldn't be enabled for everyone. Change this next line to true
+	// to change the default to "enable if available". In the meantime, users
+	// can still try it out by using USE_NATIVE_CONSOLE env variable.
+	return false
 }
 
 // GetFdInfo returns the file descriptor for an os.File and indicates whether the file represents a terminal.
