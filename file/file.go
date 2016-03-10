@@ -141,10 +141,32 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 	return name, args
 }
 
+func buildArgs() []string {
+	v := os.Getenv("DAPPER_BUILD_ARGS")
+	logrus.Debugf("DAPPER_BUILD_ARGS=%s", v)
+	if len(v) > 0 {
+		ret := []string{}
+		for _, i := range strings.Split(v, " ") {
+			i = strings.TrimSpace(i)
+			if i != "" {
+				ret = append(ret, i)
+			}
+		}
+		return ret
+	}
+	return []string{}
+}
+
 func (d *Dapperfile) build() (string, error) {
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
-	if err := d.exec("build", "-t", tag, "-f", d.File, "."); err != nil {
+	args := []string{"build", "-t", tag, "-f", d.File}
+	args = append(args, buildArgs()...)
+	args = append(args, ".")
+
+	logrus.Debugf("Build args %s", args)
+
+	if err := d.exec(args...); err != nil {
 		return "", err
 	}
 

@@ -26,13 +26,18 @@ func main() {
 	app.Version = VERSION
 	app.Usage = `Docker build wrapper
 
+	Environment variables
+
+	DAPPER_BUILD_ARGS      Args to add to the docker build command when building Dockerfile.dapper
+
+
 	Dockerfile variables
 
 	DAPPER_SOURCE          The destination directory in the container to bind/copy the source
 	DAPPER_CP              The location in the host to find the source
 	DAPPER_OUTPUT          The files you want copied to the host in CP mode
 	DAPPER_DOCKER_SOCKET   Whether the Docker socket should be bound in
-	DAPPER_RUN_ARGS        Args to add to the docker run command when building
+	DAPPER_RUN_ARGS        Args to add to the docker run command when building sources
 	DAPPER_ENV             Env vars that should be copied into the build`
 
 	app.Flags = []cli.Flag{
