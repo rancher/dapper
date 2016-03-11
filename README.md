@@ -45,6 +45,8 @@ The `Dockerfile.dapper` is intended to create a build environment but not really
 
 The `ENTRYPOINT`, `CMD`, and `WORKDIR` defined in `Dockerfile.dapper` are what are used to initiate your build.  When running `dapper foo bar`, `foo bar` will be passed as the docker CMD.  For example, running `dapper make install` will do the basic equivalent of `docker run -it --rm build-image make install`.  If you want you can set the `ENTRYPOINT` to `make` and then `dapper install` will be the same as `make install`.  Either approach is fine.
 
+You can also customize your build container image with build arguments (via `ARG` Dockerfile instructions), which are populated from environment variables on dapper image build. That is useful if you want to parameterize your build for different platforms and you're using essentially the same build environment, only on different platforms. For example, if you have `ARG ARCH` in Dockerfile.dapper, you can have `ARCH=arm` in your environment variables, and when you run `dapper -s` your dapper image is built with `--build-arg ARCH=arm` and `$ARCH` is effectively replaced with `arm` in the resulting dapper image.
+
 ### Dapper Modes: Bind mount or CP
 
 Dapper runs in two modes `bind` or `cp`, meaning bind mount in the source or cp in the source.  Depending on your environment one or the other could be preferred.  If your host is Linux bind mounting is typically preferred because it is very fast.  If you are running on Mac, Windows, or with a remote Docker daemon, CP is usually your only option.  You can force a specific mode with
