@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,7 @@ type Dapperfile struct {
 	env    Context
 	Socket bool
 	NoOut  bool
+	Args   []string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -42,7 +44,28 @@ func (d *Dapperfile) init() error {
 		return err
 	}
 	d.docker = docker
+	if d.Args, err = argsFromEnv(d.File); err != nil {
+		return err
+	}
 	return nil
+}
+
+func argsFromEnv(dockerfile string) ([]string, error) {
+	file, err := os.Open(dockerfile)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	r := []string{}
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		fields := strings.Fields(line)
+		if len(fields) > 1 && fields[0] == "ARG" && len(os.Getenv(fields[1])) > 0 {
+			r = append(r, fields[1]+"="+os.Getenv(fields[1]))
+		}
+	}
+	return r, nil
 }
 
 func (d *Dapperfile) Run(commandArgs []string) error {
@@ -144,7 +167,12 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 func (d *Dapperfile) build() (string, error) {
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
-	if err := d.exec("build", "-t", tag, "-f", d.File, "."); err != nil {
+	buildArgs := []string{"build", "-t", tag, "-f", d.File}
+	for _, v := range d.Args {
+		buildArgs = append(buildArgs, "--build-arg", v)
+	}
+	buildArgs = append(buildArgs, ".")
+	if err := d.exec(buildArgs...); err != nil {
 		return "", err
 	}
 
