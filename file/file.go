@@ -7,12 +7,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
 	"path"
+)
+
+var (
+	re = regexp.MustCompile("[^a-zA-Z0-9]")
 )
 
 type Dapperfile struct {
@@ -229,6 +234,7 @@ func (d *Dapperfile) tag() string {
 	if tag == "" {
 		tag = randString()
 	}
+	tag = re.ReplaceAllLiteralString(tag, "-")
 
 	return fmt.Sprintf("%s:%s", cwd, tag)
 }
