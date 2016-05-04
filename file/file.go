@@ -89,7 +89,7 @@ func (d *Dapperfile) argsFromEnv(dockerfile string) ([]string, error) {
 		}
 
 		if value != "" {
-			r = append(r, fmt.Sprint("%s=%s", key, value))
+			r = append(r, fmt.Sprintf("%s=%s", key, value))
 		}
 	}
 
