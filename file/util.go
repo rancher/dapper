@@ -2,6 +2,7 @@ package file
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -17,4 +18,18 @@ func randString() string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func toMap(str string) map[string]string {
+	kv := map[string]string{}
+
+	for _, part := range strings.Fields(str) {
+		kvs := strings.SplitN(part, "=", 2)
+		if len(kvs) != 2 {
+			continue
+		}
+		kv[kvs[0]] = kvs[1]
+	}
+
+	return kv
 }

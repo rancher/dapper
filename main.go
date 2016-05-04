@@ -15,6 +15,10 @@ var (
 
 func main() {
 	exit := func(err error) {
+		if err == file.ErrSkipBuild {
+			logrus.Infof("Build not supported on this architecture")
+			os.Exit(42)
+		}
 		if err != nil {
 			logrus.Fatal(err)
 		}
@@ -55,6 +59,10 @@ func main() {
 			Name:  "no-out, O",
 			Usage: "Do not copy the output back (in --mode cp)",
 		},
+		cli.BoolFlag{
+			Name:  "build",
+			Usage: "Perform Dapperfile build",
+		},
 		cli.StringFlag{
 			Name:  "directory, C",
 			Value: ".",
@@ -83,6 +91,7 @@ func run(c *cli.Context) error {
 
 	dir := c.String("directory")
 	shell := c.Bool("shell")
+	build := c.Bool("build")
 
 	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("Failed to change to directory %s: %v", dir, err)
@@ -99,6 +108,10 @@ func run(c *cli.Context) error {
 
 	if shell {
 		return dapperFile.Shell(c.Args())
+	}
+
+	if build {
+		return dapperFile.Build(c.Args())
 	}
 
 	return dapperFile.Run(c.Args())

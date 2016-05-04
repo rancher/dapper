@@ -1,2 +1,2 @@
 #!/bin/bash
-gsutil -m cp -r -p winged-math-749 bin/*   gs://releases.rancher.com/dapper/latest
+gsutil -m cp -r bin/* gs://releases.rancher.com/dapper/latest
