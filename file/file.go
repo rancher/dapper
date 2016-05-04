@@ -3,22 +3,26 @@ package file
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"syscall"
 
+	"path"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
-	"path"
 )
 
 var (
-	re = regexp.MustCompile("[^a-zA-Z0-9]")
+	re           = regexp.MustCompile("[^a-zA-Z0-9]")
+	ErrSkipBuild = errors.New("skip build")
 )
 
 type Dapperfile struct {
@@ -29,6 +33,7 @@ type Dapperfile struct {
 	Socket bool
 	NoOut  bool
 	Args   []string
+	From   string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -49,27 +54,45 @@ func (d *Dapperfile) init() error {
 		return err
 	}
 	d.docker = docker
-	if d.Args, err = argsFromEnv(d.File); err != nil {
+	if d.Args, err = d.argsFromEnv(d.File); err != nil {
 		return err
 	}
 	return nil
 }
 
-func argsFromEnv(dockerfile string) ([]string, error) {
+func (d *Dapperfile) argsFromEnv(dockerfile string) ([]string, error) {
 	file, err := os.Open(dockerfile)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	r := []string{}
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		fields := strings.Fields(line)
-		if len(fields) > 1 && fields[0] == "ARG" && len(os.Getenv(fields[1])) > 0 {
-			r = append(r, fields[1]+"="+os.Getenv(fields[1]))
+		if len(fields) <= 1 {
+			continue
+		}
+
+		command := fields[0]
+		if command != "ARG" {
+			continue
+		}
+
+		key := strings.Split(fields[1], "=")[0]
+		value := os.Getenv(key)
+
+		if key == "DAPPER_HOST_ARCH" && value == "" {
+			value = d.hostArch()
+		}
+
+		if key == "ARG" && value != "" {
+			r = append(r, fmt.Sprint("%s=%s", key, value))
 		}
 	}
+
 	return r, nil
 }
 
@@ -169,7 +192,75 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 	return name, args
 }
 
+func (d *Dapperfile) prebuild() error {
+	f, err := os.Open(d.File)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	target := ""
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "FROM ") {
+			parts := strings.Fields(line)
+			if len(parts) <= 1 {
+				return nil
+			}
+
+			target = strings.TrimSpace(parts[1])
+			continue
+		} else if target == "" || !strings.HasPrefix(line, "# FROM ") {
+			continue
+		}
+
+		baseImage, ok := toMap(line)[d.hostArch()]
+		if !ok {
+			return nil
+		}
+
+		if baseImage == "skip" {
+			return ErrSkipBuild
+		}
+
+		_, err := exec.Command(d.docker, "inspect", baseImage).CombinedOutput()
+		if err != nil {
+			if err := d.exec("pull", baseImage); err != nil {
+				return err
+			}
+		}
+
+		return d.exec("tag", baseImage, target)
+	}
+
+	return scanner.Err()
+}
+
+func (d *Dapperfile) hostArch() string {
+	return runtime.GOARCH
+}
+
+func (d *Dapperfile) Build(args []string) error {
+	if err := d.prebuild(); err != nil {
+		return err
+	}
+
+	buildArgs := []string{"build", "-f", d.File}
+	for _, v := range d.Args {
+		buildArgs = append(buildArgs, "--build-arg", v)
+	}
+	buildArgs = append(buildArgs, args...)
+
+	return d.exec(buildArgs...)
+}
+
 func (d *Dapperfile) build() (string, error) {
+	if err := d.prebuild(); err != nil {
+		return "", err
+	}
+
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
 	buildArgs := []string{"build", "-t", tag, "-f", d.File}
