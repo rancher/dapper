@@ -88,7 +88,7 @@ func (d *Dapperfile) argsFromEnv(dockerfile string) ([]string, error) {
 			value = d.hostArch()
 		}
 
-		if key == "ARG" && value != "" {
+		if value != "" {
 			r = append(r, fmt.Sprint("%s=%s", key, value))
 		}
 	}
