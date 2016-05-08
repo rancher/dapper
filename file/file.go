@@ -239,7 +239,11 @@ func (d *Dapperfile) prebuild() error {
 }
 
 func (d *Dapperfile) hostArch() string {
-	return runtime.GOARCH
+	output, err := d.execWithOutput("version", "-f", "{{.Server.Arch}}")
+	if err != nil {
+		return runtime.GOARCH
+	}
+	return strings.TrimSpace(string(output))
 }
 
 func (d *Dapperfile) Build(args []string) error {
