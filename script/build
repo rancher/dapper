@@ -16,8 +16,11 @@ mkdir -p bin
 if [ "$CROSS" = 1 ]; then
     GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-x86_64 main.go
     GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
+    GOARCH=arm64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm64 main.go
+    GOARCH=arm go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm main.go
     go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper-Linux-x86_64 main.go
     strip --strip-all ./bin/dapper-Linux-x86_64
+    cp ./bin/dapper-Linux-arm64 ./bin/dapper-Linux-aarch64
     echo Built ./bin/dapper-Linux-x86_64
 else
     go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper main.go
