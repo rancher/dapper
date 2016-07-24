@@ -34,6 +34,7 @@ type Dapperfile struct {
 	NoOut  bool
 	Args   []string
 	From   string
+	Quiet  bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -268,6 +269,9 @@ func (d *Dapperfile) build() (string, error) {
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
 	buildArgs := []string{"build", "-t", tag, "-f", d.File}
+	if d.Quiet {
+		buildArgs = append(buildArgs, "-q")
+	}
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
 	}
