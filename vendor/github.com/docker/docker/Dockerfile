@@ -23,25 +23,29 @@
 # the case. Therefore, you don't have to disable it anymore.
 #
 
-FROM ubuntu:trusty
+FROM debian:jessie
 
 # add zfs ppa
-RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E871F18B51E0147C77796AC81196BA81F6B0FC61
+RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E871F18B51E0147C77796AC81196BA81F6B0FC61 \
+	|| apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys E871F18B51E0147C77796AC81196BA81F6B0FC61
 RUN echo deb http://ppa.launchpad.net/zfs-native/stable/ubuntu trusty main > /etc/apt/sources.list.d/zfs.list
 
-# add llvm repo
-RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 6084F3CF814B57C1CF12EFD515CF4D18AF4F7421
-RUN echo deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty main > /etc/apt/sources.list.d/llvm.list
+
+# allow replacing httpredir mirror
+ARG APT_MIRROR=httpredir.debian.org
+RUN sed -i s/httpredir.debian.org/$APT_MIRROR/g /etc/apt/sources.list
 
 # Packaged dependencies
 RUN apt-get update && apt-get install -y \
 	apparmor \
+	apt-utils \
 	aufs-tools \
 	automake \
 	bash-completion \
+	bsdmainutils \
 	btrfs-tools \
 	build-essential \
-	clang-3.8 \
+	clang \
 	createrepo \
 	curl \
 	dpkg-sig \
@@ -56,20 +60,19 @@ RUN apt-get update && apt-get install -y \
 	libsystemd-journal-dev \
 	libtool \
 	mercurial \
+	net-tools \
 	pkg-config \
 	python-dev \
 	python-mock \
 	python-pip \
 	python-websocket \
-	s3cmd=1.1.0* \
 	ubuntu-zfs \
 	xfsprogs \
 	libzfs-dev \
 	tar \
+	zip \
 	--no-install-recommends \
-	&& ln -snf /usr/bin/clang-3.8 /usr/local/bin/clang \
-	&& ln -snf /usr/bin/clang++-3.8 /usr/local/bin/clang++
-
+	&& pip install awscli==1.10.15
 # Get lvm2 source for compiling statically
 ENV LVM2_VERSION 2.02.103
 RUN mkdir -p /usr/local/lvm2 \
@@ -86,11 +89,37 @@ RUN cd /usr/local/lvm2 \
 	&& make install_device-mapper
 # see https://git.fedorahosted.org/cgit/lvm2.git/tree/INSTALL
 
+# Configure the container for OSX cross compilation
+ENV OSX_SDK MacOSX10.11.sdk
+ENV OSX_CROSS_COMMIT 8aa9b71a394905e6c5f4b59e2b97b87a004658a4
+RUN set -x \
+	&& export OSXCROSS_PATH="/osxcross" \
+	&& git clone https://github.com/tpoechtrager/osxcross.git $OSXCROSS_PATH \
+	&& ( cd $OSXCROSS_PATH && git checkout -q $OSX_CROSS_COMMIT) \
+	&& curl -sSL https://s3.dockerproject.org/darwin/v2/${OSX_SDK}.tar.xz -o "${OSXCROSS_PATH}/tarballs/${OSX_SDK}.tar.xz" \
+	&& UNATTENDED=yes OSX_VERSION_MIN=10.6 ${OSXCROSS_PATH}/build.sh
+ENV PATH /osxcross/target/bin:$PATH
+
+# install seccomp: the version shipped in trusty is too old
+ENV SECCOMP_VERSION 2.3.0
+RUN set -x \
+	&& export SECCOMP_PATH="$(mktemp -d)" \
+	&& curl -fsSL "https://github.com/seccomp/libseccomp/releases/download/v${SECCOMP_VERSION}/libseccomp-${SECCOMP_VERSION}.tar.gz" \
+		| tar -xzC "$SECCOMP_PATH" --strip-components=1 \
+	&& ( \
+		cd "$SECCOMP_PATH" \
+		&& ./configure --prefix=/usr/local \
+		&& make \
+		&& make install \
+		&& ldconfig \
+	) \
+	&& rm -rf "$SECCOMP_PATH"
+
 # Install Go
 # IMPORTANT: If the version of Go is updated, the Windows to Linux CI machines
 #            will need updating, to avoid errors. Ping #docker-maintainers on IRC
 #            with a heads-up.
-ENV GO_VERSION 1.5.3
+ENV GO_VERSION 1.5.4
 RUN curl -fsSL "https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz" \
 	| tar -xzC /usr/local
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
@@ -102,9 +131,6 @@ ENV DOCKER_CROSSPLATFORMS \
 	darwin/amd64 \
 	freebsd/amd64 freebsd/386 freebsd/arm \
 	windows/amd64 windows/386
-
-# (set an explicit GOARM of 5 for maximum compatibility)
-ENV GOARM 5
 
 # This has been commented out and kept as reference because we don't support compiling with older Go anymore.
 # ENV GOFMT_VERSION 1.3.3
@@ -124,32 +150,6 @@ RUN git clone https://github.com/golang/lint.git /go/src/github.com/golang/lint 
 	&& (cd /go/src/github.com/golang/lint && git checkout -q $GO_LINT_COMMIT) \
 	&& go install -v github.com/golang/lint/golint
 
-# Configure the container for OSX cross compilation
-ENV OSX_SDK MacOSX10.11.sdk
-RUN set -x \
-	&& export OSXCROSS_PATH="/osxcross" \
-	&& git clone --depth 1 https://github.com/tpoechtrager/osxcross.git $OSXCROSS_PATH \
-	&& curl -sSL https://s3.dockerproject.org/darwin/${OSX_SDK}.tar.xz -o "${OSXCROSS_PATH}/tarballs/${OSX_SDK}.tar.xz" \
-	&& UNATTENDED=yes OSX_VERSION_MIN=10.6 ${OSXCROSS_PATH}/build.sh
-ENV PATH /osxcross/target/bin:$PATH
-
-# install seccomp
-# this can be changed to the ubuntu package libseccomp-dev if dockerinit is removed,
-# we need libseccomp.a (which the package does not provide) for dockerinit
-ENV SECCOMP_VERSION 2.2.3
-RUN set -x \
-	&& export SECCOMP_PATH="$(mktemp -d)" \
-	&& curl -fsSL "https://github.com/seccomp/libseccomp/releases/download/v${SECCOMP_VERSION}/libseccomp-${SECCOMP_VERSION}.tar.gz" \
-		| tar -xzC "$SECCOMP_PATH" --strip-components=1 \
-	&& ( \
-		cd "$SECCOMP_PATH" \
-		&& ./configure --prefix=/usr/local \
-		&& make \
-		&& make install \
-		&& ldconfig \
-	) \
-	&& rm -rf "$SECCOMP_PATH"
-
 # Install two versions of the registry. The first is an older version that
 # only supports schema1 manifests. The second is a newer version that supports
 # both. This allows integration-cli tests to cover push/pull with both schema1
@@ -168,14 +168,15 @@ RUN set -x \
 	&& rm -rf "$GOPATH"
 
 # Install notary server
-ENV NOTARY_VERSION docker-v1.10.2-1
+ENV NOTARY_VERSION docker-v1.11-3
 RUN set -x \
+	&& export GO15VENDOREXPERIMENT=1 \
 	&& export GOPATH="$(mktemp -d)" \
 	&& git clone https://github.com/docker/notary.git "$GOPATH/src/github.com/docker/notary" \
 	&& (cd "$GOPATH/src/github.com/docker/notary" && git checkout -q "$NOTARY_VERSION") \
-	&& GOPATH="$GOPATH/src/github.com/docker/notary/Godeps/_workspace:$GOPATH" \
+	&& GOPATH="$GOPATH/src/github.com/docker/notary/vendor:$GOPATH" \
 		go build -o /usr/local/bin/notary-server github.com/docker/notary/cmd/notary-server \
-	&& GOPATH="$GOPATH/src/github.com/docker/notary/Godeps/_workspace:$GOPATH" \
+	&& GOPATH="$GOPATH/src/github.com/docker/notary/vendor:$GOPATH" \
 		go build -o /usr/local/bin/notary github.com/docker/notary/cmd/notary \
 	&& rm -rf "$GOPATH"
 
@@ -186,13 +187,6 @@ RUN git clone https://github.com/docker/docker-py.git /docker-py \
 	&& git checkout -q $DOCKER_PY_COMMIT \
 	&& pip install -r test-requirements.txt
 
-# Setup s3cmd config
-RUN { \
-		echo '[default]'; \
-		echo 'access_key=$AWS_ACCESS_KEY'; \
-		echo 'secret_key=$AWS_SECRET_KEY'; \
-	} > ~/.s3cfg
-
 # Set user.email so crosbymichael's in-container merge commits go smoothly
 RUN git config --global user.email 'docker-dummy@example.com'
 
@@ -202,7 +196,7 @@ RUN useradd --create-home --gid docker unprivilegeduser
 
 VOLUME /var/lib/docker
 WORKDIR /go/src/github.com/docker/docker
-ENV DOCKER_BUILDTAGS apparmor seccomp selinux
+ENV DOCKER_BUILDTAGS apparmor pkcs11 seccomp selinux
 
 # Let us use a .bashrc file
 RUN ln -sfv $PWD/.bashrc ~/.bashrc
@@ -213,8 +207,9 @@ RUN ln -sv $PWD/contrib/completion/bash/docker /etc/bash_completion.d/docker
 # Get useful and necessary Hub images so we can "docker load" locally instead of pulling
 COPY contrib/download-frozen-image-v2.sh /go/src/github.com/docker/docker/contrib/
 RUN ./contrib/download-frozen-image-v2.sh /docker-frozen-images \
+	buildpack-deps:jessie@sha256:25785f89240fbcdd8a74bdaf30dd5599a9523882c6dfc567f2e9ef7cf6f79db6 \
 	busybox:latest@sha256:e4f93f6ed15a0cdd342f5aae387886fba0ab98af0a102da6276eaf24d6e6ade0 \
-	debian:jessie@sha256:24a900d1671b269d6640b4224e7b63801880d8e3cb2bcbfaa10a5dddcf4469ed \
+	debian:jessie@sha256:f968f10b4b523737e253a97eac59b0d1420b5c19b69928d35801a6373ffe330e \
 	hello-world:latest@sha256:8be990ef2aeb16dbcb9271ddfe2610fa6658d13f6dfb8bc72074cc1ca36966a7
 # see also "hack/make/.ensure-frozen-images" (which needs to be updated any time this list is)
 
@@ -237,12 +232,35 @@ RUN set -x \
 	&& rm -rf "$GOPATH"
 
 # Build/install the tool for embedding resources in Windows binaries
-ENV RSRC_VERSION v2
+ENV RSRC_COMMIT ba14da1f827188454a4591717fff29999010887f
 RUN set -x \
 	&& export GOPATH="$(mktemp -d)" \
-	&& git clone --depth 1 -b "$RSRC_VERSION" https://github.com/akavel/rsrc.git "$GOPATH/src/github.com/akavel/rsrc" \
+	&& git clone https://github.com/akavel/rsrc.git "$GOPATH/src/github.com/akavel/rsrc" \
+	&& (cd "$GOPATH/src/github.com/akavel/rsrc" && git checkout -q "$RSRC_COMMIT") \
 	&& go build -v -o /usr/local/bin/rsrc github.com/akavel/rsrc \
 	&& rm -rf "$GOPATH"
+
+# Install runc
+ENV RUNC_COMMIT baf6536d6259209c3edfa2b22237af82942d3dfa
+RUN set -x \
+	&& export GOPATH="$(mktemp -d)" \
+	&& git clone git://github.com/opencontainers/runc.git "$GOPATH/src/github.com/opencontainers/runc" \
+	&& cd "$GOPATH/src/github.com/opencontainers/runc" \
+	&& git checkout -q "$RUNC_COMMIT" \
+	&& make static BUILDTAGS="seccomp apparmor selinux" \
+	&& cp runc /usr/local/bin/docker-runc
+
+# Install containerd
+ENV CONTAINERD_COMMIT 9dc2b3273db42c75368988a3885a3afd770069d9
+RUN set -x \
+	&& export GOPATH="$(mktemp -d)" \
+	&& git clone git://github.com/docker/containerd.git "$GOPATH/src/github.com/docker/containerd" \
+	&& cd "$GOPATH/src/github.com/docker/containerd" \
+	&& git checkout -q "$CONTAINERD_COMMIT" \
+	&& make static \
+	&& cp bin/containerd /usr/local/bin/docker-containerd \
+	&& cp bin/containerd-shim /usr/local/bin/docker-containerd-shim \
+	&& cp bin/ctr /usr/local/bin/docker-containerd-ctr
 
 # Wrap all commands in the "docker-in-docker" script to allow nested containers
 ENTRYPOINT ["hack/dind"]

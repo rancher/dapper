@@ -1,0 +1,10 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+
+./scripts/build
+
+DOCKER_VERSION=$(grep -e '^FROM docker:' Dockerfile | sed 's/FROM docker://')
+
+docker build -t rancher/dapper:${DOCKER_VERSION} .
