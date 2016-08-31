@@ -3,8 +3,12 @@ set -ex
 
 cd $(dirname $0)/..
 
-./scripts/build
+if [ -x bin/dapper ]; then
+    ./scripts/build
+fi
 
 DOCKER_VERSION=$(grep -e '^FROM docker:' Dockerfile | sed 's/FROM docker://')
 
 docker build -t rancher/dapper:${DOCKER_VERSION} .
+mkdir -p dist
+echo rancher/dapper:${DOCKER_VERSION} > dist/images
