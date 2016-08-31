@@ -76,6 +76,10 @@ func main() {
 			Name:  "debug, d",
 			Usage: "Print debugging",
 		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: "Make Docker build quieter",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		exit(run(c))
@@ -105,6 +109,7 @@ func run(c *cli.Context) error {
 	dapperFile.Mode = c.String("mode")
 	dapperFile.Socket = c.Bool("socket")
 	dapperFile.NoOut = c.Bool("no-out")
+	dapperFile.Quiet = c.Bool("quiet")
 
 	if shell {
 		return dapperFile.Shell(c.Args())
