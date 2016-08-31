@@ -26,15 +26,16 @@ var (
 )
 
 type Dapperfile struct {
-	File   string
-	Mode   string
-	docker string
-	env    Context
-	Socket bool
-	NoOut  bool
-	Args   []string
-	From   string
-	Quiet  bool
+	File     string
+	Mode     string
+	docker   string
+	env      Context
+	Socket   bool
+	NoOut    bool
+	Args     []string
+	From     string
+	Quiet    bool
+	hostArch string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -57,6 +58,9 @@ func (d *Dapperfile) init() error {
 	d.docker = docker
 	if d.Args, err = d.argsFromEnv(d.File); err != nil {
 		return err
+	}
+	if d.hostArch == "" {
+		d.hostArch = d.findHostArch()
 	}
 	return nil
 }
@@ -86,7 +90,11 @@ func (d *Dapperfile) argsFromEnv(dockerfile string) ([]string, error) {
 		value := os.Getenv(key)
 
 		if key == "DAPPER_HOST_ARCH" && value == "" {
-			value = d.hostArch()
+			value = d.findHostArch()
+		}
+
+		if key == "DAPPER_HOST_ARCH" {
+			d.hostArch = value
 		}
 
 		if value != "" {
@@ -159,7 +167,7 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 	}
 
 	if d.env.Socket() || d.Socket {
-		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
+		args = append(args, "-v", fmt.Sprintf("%s:/var/run/docker.sock", d.env.HostSocket()))
 	}
 
 	if d.IsBind() {
@@ -217,7 +225,7 @@ func (d *Dapperfile) prebuild() error {
 			continue
 		}
 
-		baseImage, ok := toMap(line)[d.hostArch()]
+		baseImage, ok := toMap(line)[d.hostArch]
 		if !ok {
 			return nil
 		}
@@ -239,7 +247,7 @@ func (d *Dapperfile) prebuild() error {
 	return scanner.Err()
 }
 
-func (d *Dapperfile) hostArch() string {
+func (d *Dapperfile) findHostArch() string {
 	output, err := d.execWithOutput("version", "-f", "{{.Server.Arch}}")
 	if err != nil {
 		return runtime.GOARCH
