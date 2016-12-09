@@ -36,6 +36,7 @@ type Dapperfile struct {
 	From     string
 	Quiet    bool
 	hostArch string
+	Keep     bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -114,8 +115,12 @@ func (d *Dapperfile) Run(commandArgs []string) error {
 	logrus.Debugf("Running build in %s", tag)
 	name, args := d.runArgs(tag, "", commandArgs)
 	defer func() {
-		logrus.Debugf("Deleting temp container %s", name)
-		d.execWithOutput("rm", "-fv", name)
+		if d.Keep {
+			logrus.Infof("Keeping build container %s", name)
+		} else {
+			logrus.Debugf("Deleting temp container %s", name)
+			d.execWithOutput("rm", "-fv", name)
+		}
 	}()
 
 	if err := d.run(args...); err != nil {
