@@ -18,6 +18,7 @@ if [ "$CROSS" = 1 ]; then
     GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
     GOARCH=arm64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm64 main.go
     GOARCH=arm go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm main.go
+    GOARCH=ppc64le go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-ppc64le main.go
     go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper-Linux-x86_64 main.go
     strip --strip-all ./bin/dapper-Linux-x86_64
     cp ./bin/dapper-Linux-arm64 ./bin/dapper-Linux-aarch64
@@ -28,4 +29,3 @@ else
     strip --strip-all ./bin/dapper
     echo Built ./bin/dapper
 fi
-
