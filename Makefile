@@ -11,7 +11,7 @@ $(TARGETS): .dapper
 	./.dapper $@
 
 release: .dapper
-	./.dapper --keep $@
+	./.dapper $@
 
 trash: .dapper
 	./.dapper -m bind trash
