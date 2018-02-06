@@ -118,7 +118,7 @@ Setting `DAPPER_DOCKER_SOCKET` will cause the Docker socket to be bind mounted i
 
 ## License
 
-Copyright (c) 2015 [Rancher Labs, Inc.](http://rancher.com)
+Copyright (c) 2015-2018 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
