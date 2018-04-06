@@ -1,2 +1,2 @@
-FROM docker:1.12.1
+FROM docker:stable
 COPY bin/dapper /usr/local/bin/
