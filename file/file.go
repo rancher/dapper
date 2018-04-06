@@ -368,6 +368,8 @@ func (d *Dapperfile) tag() string {
 	} else {
 		cwd = "dapper-unknown"
 	}
+	// repository name must be lowercase
+	cwd = strings.ToLower(cwd)
 
 	output, _ := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
 	tag := strings.TrimSpace(string(output))
