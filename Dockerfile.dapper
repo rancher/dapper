@@ -14,11 +14,12 @@ ENV GOLANG_ARCH_amd64=amd64 GOLANG_ARCH_arm=armv6l GOLANG_ARCH=GOLANG_ARCH_${ARC
 RUN wget -O - https://storage.googleapis.com/golang/go1.9.3.linux-${!GOLANG_ARCH}.tar.gz | tar -xzf - -C /usr/local && \
     go get github.com/rancher/trash && go get github.com/golang/lint/golint
 
-ENV DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3 \
-    DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/v1.10.3-ros1/docker-1.10.3_arm \
+ENV DOCKER_URL_amd64=https://download.docker.com/linux/static/stable/x86_64/docker-18.09.0.tgz \
+    DOCKER_URL_arm=https://download.docker.com/linux/static/stable/aarch64/docker-18.09.0.tgz\
     DOCKER_URL=DOCKER_URL_${ARCH}
 
-RUN wget -O - ${!DOCKER_URL} > /usr/bin/docker && chmod +x /usr/bin/docker
+RUN wget -O - ${!DOCKER_URL} > /docker.tgz && tar -xvf docker.tgz docker/docker && mv docker/docker /usr/bin/docker && \
+    rm -rf docker*
 
 ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper
 ENV DAPPER_OUTPUT ./bin ./dist
