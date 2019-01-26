@@ -84,6 +84,11 @@ func main() {
 			Name:  "keep",
 			Usage: "Don't remove the container that was used to build",
 		},
+		cli.BoolFlag{
+			Name:   "no-context, X",
+			Usage:  "send Dockerfile via stdin to docker build command",
+			EnvVar: "DAPPER_NO_CONTEXT",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		exit(run(c))
@@ -115,6 +120,7 @@ func run(c *cli.Context) error {
 	dapperFile.NoOut = c.Bool("no-out")
 	dapperFile.Quiet = c.Bool("quiet")
 	dapperFile.Keep = c.Bool("keep")
+	dapperFile.NoContext = c.Bool("no-context")
 
 	if shell {
 		return dapperFile.Shell(c.Args())

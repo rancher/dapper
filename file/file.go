@@ -26,17 +26,18 @@ var (
 )
 
 type Dapperfile struct {
-	File     string
-	Mode     string
-	docker   string
-	env      Context
-	Socket   bool
-	NoOut    bool
-	Args     []string
-	From     string
-	Quiet    bool
-	hostArch string
-	Keep     bool
+	File      string
+	Mode      string
+	docker    string
+	env       Context
+	Socket    bool
+	NoOut     bool
+	Args      []string
+	From      string
+	Quiet     bool
+	hostArch  string
+	Keep      bool
+	NoContext bool
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -265,13 +266,28 @@ func (d *Dapperfile) Build(args []string) error {
 		return err
 	}
 
-	buildArgs := []string{"build", "-f", d.File}
+	buildArgs := []string{"build"}
+
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
 	}
 	buildArgs = append(buildArgs, args...)
 
-	return d.exec(buildArgs...)
+	if d.NoContext {
+		buildArgs = append(buildArgs, "-")
+
+		stdinFile, err := os.Open(d.File)
+		if err != nil {
+			return err
+		}
+		defer stdinFile.Close()
+
+		return d.execWithStdin(stdinFile, buildArgs...)
+	} else {
+		buildArgs = append(buildArgs, "-f", d.File)
+
+		return d.exec(buildArgs...)
+	}
 }
 
 func (d *Dapperfile) build() (string, error) {
@@ -281,16 +297,35 @@ func (d *Dapperfile) build() (string, error) {
 
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
-	buildArgs := []string{"build", "-t", tag, "-f", d.File}
+	buildArgs := []string{"build", "-t", tag}
+
 	if d.Quiet {
 		buildArgs = append(buildArgs, "-q")
 	}
+
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
 	}
-	buildArgs = append(buildArgs, ".")
-	if err := d.exec(buildArgs...); err != nil {
-		return "", err
+
+	if d.NoContext {
+		buildArgs = append(buildArgs, "-")
+
+		stdinFile, err := os.Open(d.File)
+		if err != nil {
+			return "", err
+		}
+		defer stdinFile.Close()
+
+		if err := d.execWithStdin(stdinFile, buildArgs...); err != nil {
+			return "", err
+		}
+	} else {
+		buildArgs = append(buildArgs, "-f", d.File)
+		buildArgs = append(buildArgs, ".")
+
+		if err := d.exec(buildArgs...); err != nil {
+			return "", err
+		}
 	}
 
 	if err := d.readEnv(tag); err != nil {
@@ -391,6 +426,19 @@ func (d *Dapperfile) exec(args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
+	err := cmd.Run()
+	if err != nil {
+		logrus.Debugf("Failed running %s %v: %v", d.docker, args, err)
+	}
+	return err
+}
+
+func (d *Dapperfile) execWithStdin(stdin *os.File, args ...string) error {
+	logrus.Debugf("Running %s %v", d.docker, args)
+	cmd := exec.Command(d.docker, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = stdin
 	err := cmd.Run()
 	if err != nil {
 		logrus.Debugf("Failed running %s %v: %v", d.docker, args, err)
