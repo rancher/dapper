@@ -17,15 +17,18 @@ if [ "$CROSS" = 1 ]; then
     GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-x86_64 main.go
     GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
     GOARCH=arm64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm64 main.go
+    GOARCH=ppc64le go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-ppc64le main.go
     GOARCH=arm go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm main.go
-    go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper-Linux-x86_64 main.go
-    strip --strip-all ./bin/dapper-Linux-x86_64
+    GOARCH=arm GOARM=6 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-armv6l main.go
+    GOARCH=arm GOARM=7 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-armv7l main.go
+    GOARCH=amd64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper-Linux-x86_64 main.go
     cp ./bin/dapper-Linux-arm64 ./bin/dapper-Linux-aarch64
-    cp ./bin/dapper-Linux-x86_64 ./bin/dapper
-    echo Built ./bin/dapper-Linux-x86_64
+
+    strip --strip-all ./bin/dapper-$(uname -s)-$(uname -m)
+    cp ./bin/dapper-$(uname -s)-$(uname -m) ./bin/dapper
+    echo Built ./bin/dapper-$(uname -s)-$(uname -m)
 else
     go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o ./bin/dapper main.go
     strip --strip-all ./bin/dapper
     echo Built ./bin/dapper
 fi
-
