@@ -1,6 +1,8 @@
 package file
 
 import (
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
@@ -32,4 +34,20 @@ func toMap(str string) map[string]string {
 	}
 
 	return kv
+}
+
+func (d *Dapperfile) tempfile(content []byte) (string, error) {
+	tempfile, err := ioutil.TempFile(".", d.File)
+	if err != nil {
+		return "", err
+	}
+	defer tempfile.Close()
+
+	logrus.Debugf("Created tempfile %s", tempfile.Name())
+
+	if _, err := tempfile.Write(content); err != nil {
+		return "", err
+	}
+
+	return tempfile.Name(), nil
 }

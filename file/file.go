@@ -2,22 +2,22 @@ package file
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
 
-	"path"
-
-	"github.com/sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -108,7 +108,7 @@ func (d *Dapperfile) argsFromEnv(dockerfile string) ([]string, error) {
 }
 
 func (d *Dapperfile) Run(commandArgs []string) error {
-	tag, err := d.build()
+	tag, err := d.build(nil, true)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (d *Dapperfile) Run(commandArgs []string) error {
 }
 
 func (d *Dapperfile) Shell(commandArgs []string) error {
-	tag, err := d.build()
+	tag, err := d.build(nil, !d.IsBind())
 	if err != nil {
 		return err
 	}
@@ -207,52 +207,6 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 	return name, args
 }
 
-func (d *Dapperfile) prebuild() error {
-	f, err := os.Open(d.File)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	target := ""
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "FROM ") {
-			parts := strings.Fields(line)
-			if len(parts) <= 1 {
-				return nil
-			}
-
-			target = strings.TrimSpace(parts[1])
-			continue
-		} else if target == "" || !strings.HasPrefix(line, "# FROM ") {
-			continue
-		}
-
-		baseImage, ok := toMap(line)[d.hostArch]
-		if !ok {
-			return nil
-		}
-
-		if baseImage == "skip" {
-			return ErrSkipBuild
-		}
-
-		_, err := exec.Command(d.docker, "inspect", baseImage).CombinedOutput()
-		if err != nil {
-			if err := d.exec("pull", baseImage); err != nil {
-				return err
-			}
-		}
-
-		return d.exec("tag", baseImage, target)
-	}
-
-	return scanner.Err()
-}
-
 func (d *Dapperfile) findHostArch() string {
 	output, err := d.execWithOutput("version", "-f", "{{.Server.Arch}}")
 	if err != nil {
@@ -262,36 +216,13 @@ func (d *Dapperfile) findHostArch() string {
 }
 
 func (d *Dapperfile) Build(args []string) error {
-	if err := d.prebuild(); err != nil {
-		return err
-	}
-
-	buildArgs := []string{"build"}
-
-	for _, v := range d.Args {
-		buildArgs = append(buildArgs, "--build-arg", v)
-	}
-	buildArgs = append(buildArgs, args...)
-
-	if d.NoContext {
-		buildArgs = append(buildArgs, "-")
-
-		stdinFile, err := os.Open(d.File)
-		if err != nil {
-			return err
-		}
-		defer stdinFile.Close()
-
-		return d.execWithStdin(stdinFile, buildArgs...)
-	} else {
-		buildArgs = append(buildArgs, "-f", d.File)
-
-		return d.exec(buildArgs...)
-	}
+	_, err := d.build(nil, false)
+	return err
 }
 
-func (d *Dapperfile) build() (string, error) {
-	if err := d.prebuild(); err != nil {
+func (d *Dapperfile) build(args []string, copy bool) (string, error) {
+	dapperFile, err := d.dapperFile()
+	if err != nil {
 		return "", err
 	}
 
@@ -306,26 +237,30 @@ func (d *Dapperfile) build() (string, error) {
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
 	}
+	buildArgs = append(buildArgs, args...)
 
 	if d.NoContext {
 		buildArgs = append(buildArgs, "-")
-
-		stdinFile, err := os.Open(d.File)
-		if err != nil {
-			return "", err
-		}
-		defer stdinFile.Close()
-
-		if err := d.execWithStdin(stdinFile, buildArgs...); err != nil {
+		if err := d.execWithStdin(bytes.NewBuffer(dapperFile), buildArgs...); err != nil {
 			return "", err
 		}
 	} else {
-		buildArgs = append(buildArgs, "-f", d.File)
+		tempfile, err := d.tempfile(dapperFile)
+		if err != nil {
+			return "", err
+		}
+		defer os.Remove(tempfile)
+
+		buildArgs = append(buildArgs, "-f", tempfile)
 		buildArgs = append(buildArgs, ".")
 
 		if err := d.exec(buildArgs...); err != nil {
 			return "", err
 		}
+	}
+
+	if !copy {
+		return tag, nil
 	}
 
 	if err := d.readEnv(tag); err != nil {
@@ -343,22 +278,19 @@ func (d *Dapperfile) build() (string, error) {
 }
 
 func (d *Dapperfile) buildWithContent(tag, content string) error {
-	tempfile, err := ioutil.TempFile(".", d.File)
+	tempfile, err := d.tempfile([]byte(content))
 	if err != nil {
 		return err
 	}
 
-	logrus.Debugf("Created tempfile %s", tempfile.Name())
 	defer func() {
-		logrus.Debugf("Deleting tempfile %s", tempfile.Name())
-		if err := os.Remove(tempfile.Name()); err != nil {
-			logrus.Errorf("Failed to delete tempfile %s: %v", tempfile.Name(), err)
+		logrus.Debugf("Deleting tempfile %s", tempfile)
+		if err := os.Remove(tempfile); err != nil {
+			logrus.Errorf("Failed to delete tempfile %s: %v", tempfile, err)
 		}
 	}()
 
-	ioutil.WriteFile(tempfile.Name(), []byte(content), 0600)
-
-	return d.exec("build", "-t", tag, "-f", tempfile.Name(), ".")
+	return d.exec("build", "-t", tag, "-f", tempfile, ".")
 }
 
 func (d *Dapperfile) readEnv(tag string) error {
@@ -433,7 +365,7 @@ func (d *Dapperfile) exec(args ...string) error {
 	return err
 }
 
-func (d *Dapperfile) execWithStdin(stdin *os.File, args ...string) error {
+func (d *Dapperfile) execWithStdin(stdin io.Reader, args ...string) error {
 	logrus.Debugf("Running %s %v", d.docker, args)
 	cmd := exec.Command(d.docker, args...)
 	cmd.Stdout = os.Stdout
@@ -458,4 +390,44 @@ func (d *Dapperfile) execWithOutput(args ...string) ([]byte, error) {
 
 func (d *Dapperfile) IsBind() bool {
 	return d.env.Mode(d.Mode) == "bind"
+}
+
+func (d *Dapperfile) dapperFile() ([]byte, error) {
+	var input io.Reader
+
+	if d.NoContext {
+		input = os.Stdin
+	} else {
+		f, err := os.Open(d.File)
+		if err != nil {
+			return nil, err
+		}
+		input = f
+		defer f.Close()
+	}
+
+	buffer := &bytes.Buffer{}
+	scanner := bufio.NewScanner(input)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "FROM ") && len(strings.Fields(line)) == 2 && scanner.Scan() {
+			nextLine := scanner.Text()
+			if strings.HasPrefix(nextLine, "# FROM") {
+				baseImage, ok := toMap(nextLine)[d.hostArch]
+				if ok && baseImage == "skip" {
+					return nil, ErrSkipBuild
+				}
+				if ok {
+					line = "FROM " + baseImage
+				}
+			}
+			line = line + "\n" + nextLine
+		}
+
+		buffer.WriteString(line)
+		buffer.WriteString("\n")
+	}
+
+	return buffer.Bytes(), scanner.Err()
 }
