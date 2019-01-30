@@ -151,7 +151,7 @@ func (d *Dapperfile) Run(commandArgs []string) error {
 }
 
 func (d *Dapperfile) Shell(commandArgs []string) error {
-	tag, err := d.build(nil, !d.IsBind())
+	tag, err := d.build(nil, true)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (d *Dapperfile) findHostArch() string {
 }
 
 func (d *Dapperfile) Build(args []string) error {
-	_, err := d.build(nil, false)
+	_, err := d.build(args, false)
 	return err
 }
 
@@ -228,7 +228,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
-	buildArgs := []string{"build", "-t", tag}
+	buildArgs := []string{"build"}
+	if len(args) == 0 {
+		buildArgs = append(buildArgs,"-t", tag)
+	}
 
 	if d.Quiet {
 		buildArgs = append(buildArgs, "-q")
@@ -237,10 +240,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
 	}
-	buildArgs = append(buildArgs, args...)
 
 	if d.NoContext {
 		buildArgs = append(buildArgs, "-")
+		buildArgs = append(buildArgs, args...)
 		if err := d.execWithStdin(bytes.NewBuffer(dapperFile), buildArgs...); err != nil {
 			return "", err
 		}
@@ -252,7 +255,11 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 		defer os.Remove(tempfile)
 
 		buildArgs = append(buildArgs, "-f", tempfile)
-		buildArgs = append(buildArgs, ".")
+		if len(args) > 0 {
+			buildArgs = append(buildArgs, args...)
+		} else {
+			buildArgs = append(buildArgs, ".")
+		}
 
 		if err := d.exec(buildArgs...); err != nil {
 			return "", err
