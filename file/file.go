@@ -168,12 +168,12 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 
 	args := []string{"-i", "--name", name}
 
-	if term.IsTerminal(0) {
+	if term.IsTerminal(os.Stdout.Fd()) {
 		args = append(args, "-t")
 	}
 
 	if d.env.Socket() || d.Socket {
-		args = append(args, "-v", fmt.Sprintf("%s:/var/run/docker.sock", d.env.HostSocket()))
+		args = append(args, "-v", d.vSocket())
 	}
 
 	if d.IsBind() {
@@ -230,7 +230,7 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 	logrus.Debugf("Building %s using %s", tag, d.File)
 	buildArgs := []string{"build"}
 	if len(args) == 0 {
-		buildArgs = append(buildArgs,"-t", tag)
+		buildArgs = append(buildArgs, "-t", tag)
 	}
 
 	if d.Quiet {
