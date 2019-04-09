@@ -1,7 +1,6 @@
 package file
 
 import (
-	"os"
 	"strings"
 )
 
@@ -32,14 +31,6 @@ func (c Context) Socket() bool {
 		return "true" == v
 	}
 	return false
-}
-
-func (c Context) HostSocket() string {
-	s := os.Getenv("DOCKER_HOST")
-	if strings.HasPrefix(s, "unix://") {
-		return strings.TrimPrefix(s, "unix://")
-	}
-	return "/var/run/docker.sock"
 }
 
 func (c Context) Mode(mode string) string {
