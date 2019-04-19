@@ -17,8 +17,8 @@ while read HASH ARCH; do
 FROM docker@${HASH}
 COPY bin/dapper-Linux-${BIN_ARCH} /usr/local/bin/dapper
 EOF
-    docker build -f Dockerfile.gen -t ${REPO}/dapper:${VERSION}-${ARCH} .
-    IMAGES="$IMAGES ${REPO}/dapper:${VERSION}-${ARCH}"
+    docker build -f Dockerfile.gen -t ${REPO}/dapper:${VERSION}-linux-${ARCH} .
+    IMAGES="$IMAGES ${REPO}/dapper:${VERSION}-linux-${ARCH}"
 done <<< $(docker manifest inspect docker:18.09 | jq -r '.manifests[] | "\(.digest) \(.platform.architecture)"')
 
 echo '#!/bin/bash' >push.sh
@@ -26,7 +26,7 @@ chmod +x push.sh
 for i in ${IMAGES}; do
     echo docker push $i >> push.sh
 done
-echo manifest-tool push from-args --platforms linux/arm,linux/arm64,linux/amd64 --template ${REPO}/dapper:${VERSION}-ARCH --target ${REPO}/dapper:${VERSION} >> push.sh
+echo manifest-tool push from-args --platforms linux/arm,linux/arm64,linux/amd64 --template ${REPO}/dapper:${VERSION}-OS-ARCH --target ${REPO}/dapper:${VERSION} >> push.sh
 echo '#######' push.sh
 cat ./push.sh
 echo '#######' push.sh
