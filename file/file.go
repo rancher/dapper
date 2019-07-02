@@ -308,7 +308,7 @@ func (d *Dapperfile) buildWithContent(tag, content string) error {
 func (d *Dapperfile) readEnv(tag string) error {
 	var envList []string
 
-	args := []string{"inspect", "-f", "{{json .ContainerConfig.Env}}", tag}
+	args := []string{"inspect", "-f", "{{json .Config.Env}}", tag}
 
 	cmd := exec.Command(d.docker, args...)
 	output, err := cmd.CombinedOutput()
