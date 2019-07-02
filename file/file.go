@@ -26,18 +26,19 @@ var (
 )
 
 type Dapperfile struct {
-	File      string
-	Mode      string
-	docker    string
-	env       Context
-	Socket    bool
-	NoOut     bool
-	Args      []string
-	From      string
-	Quiet     bool
-	hostArch  string
-	Keep      bool
-	NoContext bool
+	File        string
+	Mode        string
+	docker      string
+	env         Context
+	Socket      bool
+	NoOut       bool
+	Args        []string
+	From        string
+	Quiet       bool
+	hostArch    string
+	Keep        bool
+	NoContext   bool
+	MountSuffix string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -179,7 +180,11 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 	if d.IsBind() {
 		wd, err := os.Getwd()
 		if err == nil {
-			args = append(args, "-v", fmt.Sprintf("%s:%s", fmt.Sprintf("%s/%s", wd, d.env.Cp()), d.env.Source()))
+			suffix := ""
+			if d.MountSuffix != "" {
+				suffix = ":" + d.MountSuffix
+			}
+			args = append(args, "-v", fmt.Sprintf("%s:%s%s", fmt.Sprintf("%s/%s", wd, d.env.Cp()), d.env.Source(), suffix))
 		}
 	}
 

@@ -89,6 +89,10 @@ func main() {
 			Usage:  "send Dockerfile via stdin to docker build command",
 			EnvVar: "DAPPER_NO_CONTEXT",
 		},
+		cli.StringFlag{
+			Name:  "mount-suffix, S",
+			Usage: "Add a suffix to the source directory mount",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		exit(run(c))
@@ -121,6 +125,7 @@ func run(c *cli.Context) error {
 	dapperFile.Quiet = c.Bool("quiet")
 	dapperFile.Keep = c.Bool("keep")
 	dapperFile.NoContext = c.Bool("no-context")
+	dapperFile.MountSuffix = c.String("mount-suffix")
 
 	if shell {
 		return dapperFile.Shell(c.Args())
