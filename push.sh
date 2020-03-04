@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 docker push ibuildthecloud/dapper:test-amd64
 docker push ibuildthecloud/dapper:test-arm
 docker push ibuildthecloud/dapper:test-arm64
