@@ -1,14 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-cd $(dirname $0)/..
+cd "$(dirname $0)"/..
 
 . ./scripts/version
 
 IMAGES=
 REPO=${REPO:-rancher}
 
-while read HASH ARCH; do
+docker manifest inspect docker:18.09 | jq -r '.manifests[] | "\(.digest) \(.platform.architecture)"' | while read HASH ARCH; do
     BIN_ARCH=${ARCH}
     if [ "${ARCH}" = amd64 ];then
         BIN_ARCH=x86_64
@@ -19,9 +19,9 @@ COPY bin/dapper-Linux-${BIN_ARCH} /usr/local/bin/dapper
 EOF
     docker build -f Dockerfile.gen -t ${REPO}/dapper:${VERSION}-linux-${ARCH} .
     IMAGES="$IMAGES ${REPO}/dapper:${VERSION}-linux-${ARCH}"
-done <<< $(docker manifest inspect docker:18.09 | jq -r '.manifests[] | "\(.digest) \(.platform.architecture)"')
+done
 
-echo '#!/bin/bash' >push.sh
+echo '#!/bin/sh' >push.sh
 chmod +x push.sh
 for i in ${IMAGES}; do
     echo docker push $i >> push.sh

@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 mkdir -p bin dist
-if [ -e ./scripts/$1 ]; then
+if [ -e ./scripts/"$1" ]; then
     ./scripts/"$@"
 else
     exec "$@"
