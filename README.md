@@ -5,7 +5,7 @@ Dapper is a tool to wrap any existing build tool in an consistent environment.  
 ## Installation
 
 ```sh
-curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/local/bin/dapper
+curl -sL https://releases.rancher.com/dapper/latest/dapper-$(uname -s)-$(uname -m) > /usr/local/bin/dapper
 chmod +x /usr/local/bin/dapper
 ```
 
