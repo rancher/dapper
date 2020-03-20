@@ -2,6 +2,10 @@ FROM golang:1.14.1-buster
 
 env ARCH amd64
 
+ARG http_proxy=$http_proxy
+ARG https_proxy=$https_proxy
+ARG no_proxy=$no_proxy
+
 RUN apt-get update && \
     apt-get install -y apt-transport-https ca-certificates
 
