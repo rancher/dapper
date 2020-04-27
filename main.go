@@ -6,7 +6,7 @@ import (
 
 	"github.com/rancher/dapper/file"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli.v1"
+	"github.com/urfave/cli"
 )
 
 var (
@@ -93,6 +93,10 @@ func main() {
 			Name:  "mount-suffix, S",
 			Usage: "Add a suffix to the source directory mount",
 		},
+		cli.StringFlag{
+			Name:  "target",
+			Usage: "The multistage build target to use",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		exit(run(c))
@@ -126,6 +130,7 @@ func run(c *cli.Context) error {
 	dapperFile.Keep = c.Bool("keep")
 	dapperFile.NoContext = c.Bool("no-context")
 	dapperFile.MountSuffix = c.String("mount-suffix")
+	dapperFile.Target = c.String("target")
 
 	if shell {
 		return dapperFile.Shell(c.Args())

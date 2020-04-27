@@ -16,7 +16,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/docker/docker/pkg/term"
+	"github.com/mattn/go-isatty"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,6 +39,7 @@ type Dapperfile struct {
 	Keep        bool
 	NoContext   bool
 	MountSuffix string
+	Target      string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -169,7 +170,7 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 
 	args := []string{"-i", "--name", name}
 
-	if term.IsTerminal(os.Stdout.Fd()) {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
 		args = append(args, "-t")
 	}
 
@@ -240,6 +241,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 
 	if d.Quiet {
 		buildArgs = append(buildArgs, "-q")
+	}
+
+	if d.Target != "" {
+		buildArgs = append(buildArgs, "--target", d.Target)
 	}
 
 	for _, v := range d.Args {

@@ -1,4 +1,4 @@
-FROM golang:1.12-windowsservercore
+FROM golang:1.14-windowsservercore
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 RUN [Environment]::SetEnvironmentVariable('PATH', ('c:\innoextract;c:\app;{0}' -f $env:PATH), [EnvironmentVariableTarget]::Machine)
