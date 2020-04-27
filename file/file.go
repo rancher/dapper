@@ -16,7 +16,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/docker/docker/pkg/term"
+	"github.com/mattn/go-isatty"
 	"github.com/sirupsen/logrus"
 )
 
@@ -169,7 +169,7 @@ func (d *Dapperfile) runArgs(tag, shell string, commandArgs []string) (string, [
 
 	args := []string{"-i", "--name", name}
 
-	if term.IsTerminal(os.Stdout.Fd()) {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
 		args = append(args, "-t")
 	}
 
