@@ -39,6 +39,7 @@ type Dapperfile struct {
 	Keep        bool
 	NoContext   bool
 	MountSuffix string
+	Target      string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -240,6 +241,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 
 	if d.Quiet {
 		buildArgs = append(buildArgs, "-q")
+	}
+
+	if d.Target != "" {
+		buildArgs = append(buildArgs, "--target", d.Target)
 	}
 
 	for _, v := range d.Args {
