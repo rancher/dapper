@@ -5,8 +5,10 @@ cd "$(dirname $0)"/..
 
 . ./scripts/version
 
-IMAGES=
 REPO=${REPO:-rancher}
+
+echo '#!/bin/sh' >push.sh
+chmod +x push.sh
 
 docker manifest inspect docker:18.09 | jq -r '.manifests[] | "\(.digest) \(.platform.architecture)"' | while read HASH ARCH; do
     BIN_ARCH=${ARCH}
@@ -18,14 +20,9 @@ FROM docker@${HASH}
 COPY bin/dapper-Linux-${BIN_ARCH} /usr/local/bin/dapper
 EOF
     docker build -f Dockerfile.gen -t ${REPO}/dapper:${VERSION}-linux-${ARCH} .
-    IMAGES="$IMAGES ${REPO}/dapper:${VERSION}-linux-${ARCH}"
+    echo "docker push ${REPO}/dapper:${VERSION}-linux-${ARCH}" >> push.sh
 done
 
-echo '#!/bin/sh' >push.sh
-chmod +x push.sh
-for i in ${IMAGES}; do
-    echo docker push $i >> push.sh
-done
 echo manifest-tool push from-args --platforms linux/arm,linux/arm64,linux/amd64 --template ${REPO}/dapper:${VERSION}-OS-ARCH --target ${REPO}/dapper:${VERSION} >> push.sh
 echo '#######' push.sh
 cat ./push.sh
