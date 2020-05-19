@@ -1,22 +1,333 @@
 ---
 kind: pipeline
-name: default
+type: docker
+name: build
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: build
-  pull: default
-  image: rancher/dapper:1.10.3
-  commands:
-  - CROSS=1 dapper -d ci
-  volumes:
-  - name: socket
-    path: /var/run/docker.sock
-
+  - name: dapper
+    image: golang:1.14.1-buster
+    privileged: true
+    commands:
+      - go build -mod vendor -o dapper
+    volumes:
+      - name: socket
+        path: /var/run/docker.sock
+    when:
+      event:
+        - pull_request
+        - push
+        - tag
+  - name: cross-platform
+    image: docker:19.03
+    privileged: true
+    environment:
+      CROSS: 1
+      VERSION: ${DRONE_TAG}
+    commands:
+      - ./dapper ci
+    volumes:
+      - name: socket
+        path: /var/run/docker.sock
+    when:
+      event:
+        - pull_request
+        - push
+        - tag
+  - name: upload-tag
+    pull: default
+    image: plugins/gcs
+    settings:
+      acl:
+        - allUsers:READER
+      cache_control: "no-cache,must-revalidate"
+      source: ./dist/artifacts
+      target: releases.rancher.com/dapper/${DRONE_TAG}
+      token:
+        from_secret: google_auth_key
+    when:
+      event:
+        - tag
+  - name: upload-latest
+    pull: default
+    image: plugins/gcs
+    settings:
+      acl:
+        - allUsers:READER
+      cache_control: "no-cache,must-revalidate"
+      source: ./dist/artifacts
+      target: releases.rancher.com/dapper/latest
+      token:
+        from_secret: google_auth_key
+    when:
+      event:
+        - tag
 volumes:
-- name: socket
-  host:
-    path: /var/run/docker.sock
+  - name: socket
+    host:
+      path: /var/run/docker.sock
+trigger:
+  event:
+    exclude:
+      - promote
+---
+kind: pipeline
+type: docker
+name: package-amd64
+platform:
+  os: linux
+  arch: amd64
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: luthermonson/dapper
+      tag: "${DRONE_TAG}-linux-amd64"
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+depends_on:
+  - build
+---
+kind: pipeline
+type: docker
+name: package-arm
+platform:
+  os: linux
+  arch: arm
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-linux-arm"
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+depends_on:
+  - build
+---
+kind: pipeline
+type: docker
+name: package-arm64
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-linux-arm64"
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
+name: package-windows-1809
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1809
+
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - SERVERCORE_VERSION=1809
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.windows
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-windows-amd64-1809"
+    volumes:
+      - name: docker
+        path: \\\\.\\pipe\\docker_engine
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: \\\\.\\pipe\\docker_engine
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
+name: package-windows-1903
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1903
+
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - SERVERCORE_VERSION=1903
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.windows
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-windows-amd64-1903"
+    volumes:
+      - name: docker
+        path: \\\\.\\pipe\\docker_engine
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: \\\\.\\pipe\\docker_engine
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
+name: package-windows-1909
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1909
+
+steps:
+  - name: docker
+    image: plugins/docker
+    settings:
+      build_args:
+        - SERVERCORE_VERSION=1909
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.windows
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-windows-amd64-1909"
+    volumes:
+      - name: docker
+        path: \\\\.\\pipe\\docker_engine
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: \\\\.\\pipe\\docker_engine
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
+name: manifest
+platform:
+  os: linux
+  arch: amd64
+steps:
+  - name: push
+    image: ibuildthecloud/manifest:v1.2.3-patch1
+    settings:
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      spec: manifest.tmpl
+    when:
+      branch:
+        - master
+      event:
+        - tag
+
+depends_on:
+  - build
+  - package-amd64
+  - package-arm
+  - package-arm64
+  - package-windows-1809
+  - package-windows-1903
+  - package-windows-1909
