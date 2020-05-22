@@ -122,7 +122,9 @@ func (d *Dapperfile) Run(commandArgs []string) error {
 			logrus.Infof("Keeping build container %s", name)
 		} else {
 			logrus.Debugf("Deleting temp container %s", name)
-			d.execWithOutput("rm", "-fv", name)
+			if _, err := d.execWithOutput("rm", "-fv", name); err != nil {
+				logrus.Debugf("Error deleting temp container: %s", err)
+			}
 		}
 	}()
 

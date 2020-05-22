@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ex
 
 mkdir -p bin dist
 if [ -e ./scripts/"$1" ]; then
@@ -8,4 +8,6 @@ else
     exec "$@"
 fi
 
-chown -R $DAPPER_UID:$DAPPER_GID .
+if [ "$DAPPER_UID" -ne "-1" ]; then
+  chown -R $DAPPER_UID:$DAPPER_GID .
+fi
