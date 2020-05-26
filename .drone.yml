@@ -94,7 +94,7 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
-      repo: luthermonson/dapper
+      repo: rancher/dapper
       tag: "${DRONE_TAG}-linux-amd64"
     volumes:
       - name: docker
