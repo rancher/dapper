@@ -36,11 +36,3 @@ RUN $URL = 'https://{0}/dapper/{1}/dapper-Windows-x86_64.exe' -f $env:RELEASES, 
     Write-Host ('Downloading dapper from {0} ...' -f $URL); \
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
     Invoke-WebRequest -UseBasicParsing -OutFile c:/rancher/dapper.exe -Uri $URL;
-
-FROM mcr.microsoft.com/windows/nanoserver:${SERVERCORE_VERSION}
-ENV PATH "C:\git\cmd;C:\git\mingw64\bin;C:\git\usr\bin;c:\innoextract;c:\app;c:\rancher;"
-COPY --from=builder /git /git
-COPY --from=builder /innoextract /innoextract
-COPY --from=builder /rancher /rancher
-COPY --from=builder /app /app
-COPY --from=builder /windows/system32/netapi32.dll /windows/system32/netapi32.dll
