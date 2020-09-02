@@ -37,6 +37,21 @@ steps:
         - pull_request
         - push
         - tag
+  - name: github_binary_release
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      files:
+        - "dist/artifacts/*"
+    when:
+      instance:
+        - drone-publish.rancher.io
+      ref:
+        - refs/head/master
+        - refs/tags/*
+      event:
+        - tag
   - name: upload-tag
     pull: default
     image: plugins/gcs
@@ -304,6 +319,52 @@ depends_on:
 ---
 kind: pipeline
 type: docker
+name: package-windows-2004
+
+platform:
+  os: windows
+  arch: amd64
+  version: 2004
+
+# remove this and use upstream images when https://github.com/drone/drone-git/pull/25 is merged
+clone:
+  disable: true
+
+steps:
+  - name: clone
+    image: luthermonson/drone-git:windows-2004-amd64
+  - name: docker
+    image: luthermonson/drone-docker:2004
+    settings:
+      build_args:
+        - SERVERCORE_VERSION=2004
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.windows
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-windows-amd64-2004"
+    volumes:
+      - name: docker
+        path: \\\\.\\pipe\\docker_engine
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: \\\\.\\pipe\\docker_engine
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
 name: manifest
 platform:
   os: linux
@@ -331,3 +392,4 @@ depends_on:
   - package-windows-1809
   - package-windows-1903
   - package-windows-1909
+  - package-windows-2004
