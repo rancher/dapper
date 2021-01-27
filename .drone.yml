@@ -9,7 +9,7 @@ platform:
 
 steps:
   - name: dapper
-    image: golang:1.14.1-buster
+    image: golang:1.15.7-buster
     privileged: true
     commands:
       - go build -mod vendor -o dapper
@@ -22,7 +22,7 @@ steps:
         - push
         - tag
   - name: cross-platform
-    image: docker:19.03
+    image: docker:20.10
     privileged: true
     environment:
       CROSS: 1
