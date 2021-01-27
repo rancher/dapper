@@ -1,4 +1,4 @@
-FROM golang:1.14.1-buster
+FROM golang:1.15.7-buster
 
 ENV ARCH amd64
 
