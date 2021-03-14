@@ -29,7 +29,7 @@ dapper
 This is the `Dockerfile.dapper` used
 
 ```Dockerfile
-FROM golang:1.4
+FROM golang:1.15
 RUN go get github.com/tools/godep
 ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper
 ENV DAPPER_OUTPUT bin
