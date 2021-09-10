@@ -11,6 +11,11 @@ manifests:
       architecture: arm
       os: linux
   -
+    image: rancher/dapper:{{#if build.tag}}{{build.tag}}{{else}}{{replace "release/" "" build.branch }}-head{{/if}}-linux-s390x
+    platform:
+      architecture: s390x
+      os: linux
+  -
     image: rancher/dapper:{{#if build.tag}}{{build.tag}}{{else}}{{replace "release/" "" build.branch }}-head{{/if}}-linux-arm64
     platform:
       architecture: arm64
