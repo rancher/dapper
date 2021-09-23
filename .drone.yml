@@ -199,6 +199,49 @@ depends_on:
 ---
 kind: pipeline
 type: docker
+name: package-s390x
+
+platform:
+  os: linux
+  arch: amd64
+
+node:
+  arch: s390x
+
+# TODO: change rancher/drone-images:docker-s390x after merging https://github.com/drone-plugins/drone-docker/pull/329
+
+steps:
+  - name: docker
+    image: rancher/drone-images:docker-s390x
+    settings:
+      build_args:
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.s390x
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-linux-s390x"
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
 name: package-windows-1809
 
 platform:
@@ -223,86 +266,6 @@ steps:
         from_secret: docker_username
       repo: rancher/dapper
       tag: "${DRONE_TAG}-windows-amd64-1809"
-    volumes:
-      - name: docker
-        path: \\\\.\\pipe\\docker_engine
-    when:
-      event:
-        - tag
-volumes:
-  - name: docker
-    host:
-      path: \\\\.\\pipe\\docker_engine
-depends_on:
-  - build
-
----
-kind: pipeline
-type: docker
-name: package-windows-1903
-
-platform:
-  os: windows
-  arch: amd64
-  version: 1903
-
-steps:
-  - name: docker
-    image: plugins/docker
-    settings:
-      build_args:
-        - SERVERCORE_VERSION=1903
-        - "VERSION=${DRONE_TAG}"
-        - "RELEASES=releases.rancher.com"
-      context: package/
-      custom_dns: 1.1.1.1
-      dockerfile: package/Dockerfile.windows
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-      repo: rancher/dapper
-      tag: "${DRONE_TAG}-windows-amd64-1903"
-    volumes:
-      - name: docker
-        path: \\\\.\\pipe\\docker_engine
-    when:
-      event:
-        - tag
-volumes:
-  - name: docker
-    host:
-      path: \\\\.\\pipe\\docker_engine
-depends_on:
-  - build
-
----
-kind: pipeline
-type: docker
-name: package-windows-1909
-
-platform:
-  os: windows
-  arch: amd64
-  version: 1909
-
-steps:
-  - name: docker
-    image: plugins/docker
-    settings:
-      build_args:
-        - SERVERCORE_VERSION=1909
-        - "VERSION=${DRONE_TAG}"
-        - "RELEASES=releases.rancher.com"
-      context: package/
-      custom_dns: 1.1.1.1
-      dockerfile: package/Dockerfile.windows
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-      repo: rancher/dapper
-      tag: "${DRONE_TAG}-windows-amd64-1909"
     volumes:
       - name: docker
         path: \\\\.\\pipe\\docker_engine
@@ -435,8 +398,7 @@ depends_on:
   - package-amd64
   - package-arm
   - package-arm64
+  - package-s390x
   - package-windows-1809
-  - package-windows-1903
-  - package-windows-1909
   - package-windows-2004
   - package-windows-20H2
