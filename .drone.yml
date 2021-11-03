@@ -374,6 +374,52 @@ depends_on:
 ---
 kind: pipeline
 type: docker
+name: package-windows-ltsc2022
+
+platform:
+  os: windows
+  arch: amd64
+  version: 2022
+
+# remove this and use upstream images when https://github.com/drone/drone-git/pull/25 is merged
+clone:
+  disable: true
+
+steps:
+  - name: clone
+    image: rancher/drone-images:git-amd64-ltsc2022
+  - name: docker
+    image: rancher/drone-images:docker-amd64-ltsc2022
+    settings:
+      build_args:
+        - SERVERCORE_VERSION=ltsc2022
+        - "VERSION=${DRONE_TAG}"
+        - "RELEASES=releases.rancher.com"
+      context: package/
+      custom_dns: 1.1.1.1
+      dockerfile: package/Dockerfile.windows
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+      repo: rancher/dapper
+      tag: "${DRONE_TAG}-windows-amd64-ltsc2022"
+    volumes:
+      - name: docker
+        path: \\\\.\\pipe\\docker_engine
+    when:
+      event:
+        - tag
+volumes:
+  - name: docker
+    host:
+      path: \\\\.\\pipe\\docker_engine
+depends_on:
+  - build
+
+---
+kind: pipeline
+type: docker
 name: manifest
 platform:
   os: linux
@@ -402,3 +448,4 @@ depends_on:
   - package-windows-1809
   - package-windows-2004
   - package-windows-20H2
+  - package-windows-ltsc2022
