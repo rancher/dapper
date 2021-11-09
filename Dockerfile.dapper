@@ -1,4 +1,4 @@
-FROM golang:1.15.7-buster
+FROM golang:1.16.9-buster
 
 ENV ARCH amd64
 
@@ -14,7 +14,7 @@ RUN wget -O - https://download.docker.com/linux/debian/gpg | apt-key add - && \
     cat /etc/apt/sources.list
 
 RUN if [ "${ARCH}" == "amd64" ]; then \
-    curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.20.0; \
+    curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.43.0; \
     fi
 
 RUN apt-get update && \
