@@ -9,7 +9,7 @@ platform:
 
 steps:
   - name: dapper
-    image: golang:1.15.7-buster
+    image: golang:1.16.9-buster
     privileged: true
     commands:
       - go build -mod vendor -o dapper
@@ -278,53 +278,6 @@ volumes:
       path: \\\\.\\pipe\\docker_engine
 depends_on:
   - build
-
----
-kind: pipeline
-type: docker
-name: package-windows-2004
-
-platform:
-  os: windows
-  arch: amd64
-  version: 2004
-
-# remove this and use upstream images when https://github.com/drone/drone-git/pull/25 is merged
-clone:
-  disable: true
-
-steps:
-  - name: clone
-    image: luthermonson/drone-git:windows-2004-amd64
-  - name: docker
-    image: luthermonson/drone-docker:2004
-    settings:
-      build_args:
-        - SERVERCORE_VERSION=2004
-        - "VERSION=${DRONE_TAG}"
-        - "RELEASES=releases.rancher.com"
-      context: package/
-      custom_dns: 1.1.1.1
-      dockerfile: package/Dockerfile.windows
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-      repo: rancher/dapper
-      tag: "${DRONE_TAG}-windows-amd64-2004"
-    volumes:
-      - name: docker
-        path: \\\\.\\pipe\\docker_engine
-    when:
-      event:
-        - tag
-volumes:
-  - name: docker
-    host:
-      path: \\\\.\\pipe\\docker_engine
-depends_on:
-  - build
-
 ---
 kind: pipeline
 type: docker
@@ -446,6 +399,5 @@ depends_on:
   - package-arm64
   - package-s390x
   - package-windows-1809
-  - package-windows-2004
   - package-windows-20H2
   - package-windows-ltsc2022

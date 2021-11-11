@@ -1,8 +1,8 @@
-FROM golang:1.15.7-windowsservercore
+FROM golang:1.16.9-windowsservercore
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 RUN pushd c:\; \
-    $URL = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/18.09.6/docker.exe'; \
+    $URL = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe'; \
     \
     Write-Host ('Downloading docker from {0} ...' -f $URL); \
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \

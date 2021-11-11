@@ -3,7 +3,7 @@ ARG SERVERCORE_VERSION
 FROM mcr.microsoft.com/windows/servercore:${SERVERCORE_VERSION}
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 RUN [Environment]::SetEnvironmentVariable('PATH', ('C:\git\cmd;C:\git\mingw64\bin;C:\git\usr\bin;c:\innoextract;c:\app;c:\rancher;{0}' -f $env:PATH), [EnvironmentVariableTarget]::Machine)
-RUN $URL = 'https://github.com/git-for-windows/git/releases/download/v2.21.0.windows.1/MinGit-2.21.0-64-bit.zip'; \
+RUN $URL = 'https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/MinGit-2.23.0-64-bit.zip'; \
     \
     Write-Host ('Downloading git from {0} ...' -f $URL); \
     \
@@ -19,7 +19,7 @@ RUN $URL = 'https://github.com/git-for-windows/git/releases/download/v2.21.0.win
     Remove-Item -Force -Path c:\git.zip; \
     \
     Write-Host 'Complete.';
-RUN $URL = 'http://constexpr.org/innoextract/files/innoextract-1.7-windows.zip'; \
+RUN $URL = 'https://constexpr.org/innoextract/files/innoextract-1.9/innoextract-1.9-windows.zip'; \
     \
     Write-Host ('Downloading innoextract from {0} ...' -f $URL); \
     \
@@ -35,7 +35,7 @@ RUN $URL = 'http://constexpr.org/innoextract/files/innoextract-1.7-windows.zip';
     Remove-Item -Force -Recurse -Path c:\innoextract.zip; \
     \
     Write-Host 'Complete.';
-RUN $URL = 'https://github.com/docker/toolbox/releases/download/v18.09.3/DockerToolbox-18.09.3.exe'; \
+RUN $URL = 'https://github.com/docker/toolbox/releases/download/v19.03.1/DockerToolbox-19.03.1.exe'; \
     \
     Write-Host ('Downloading docker from {0} ...' -f $URL); \
     \
