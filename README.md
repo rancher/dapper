@@ -1,6 +1,6 @@
 # Dapper - Docker Build Wrapper
 
-Dapper is a tool to wrap any existing build tool in an consistent environment.  This allows people to build your software from source or modify it without worrying about setting up a build environment.  The approach is very simple and taken from a common pattern that has adopted by many open source projects.  Create a file called `Dockerfile.dapper` in the root of your repository.  Dapper will build that Dockerfile and then execute a container based off of the resulting image.  Dapper will also copy in source files and copy out resulting artifacts or will use bind mounting if you choose.
+Dapper is a tool to wrap any existing build tool in a consistent environment.  This allows people to build your software from source or modify it without worrying about setting up a build environment.  The approach is very simple and taken from a common pattern that has been adopted by many open source projects.  Create a file called `Dockerfile.dapper` in the root of your repository.  Dapper will build that Dockerfile and then execute a container based off of the resulting image.  Dapper will also copy in source files and copy out resulting artifacts or will use bind mounting if you choose.
 
 ## Installation
 
