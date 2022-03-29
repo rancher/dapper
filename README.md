@@ -12,7 +12,7 @@ chmod +x /usr/local/bin/dapper
 From source
 
 ```sh
-go get github.com/rancher/dapper
+go install github.com/rancher/dapper@latest
 ```
 
 ## Example
@@ -20,7 +20,7 @@ go get github.com/rancher/dapper
 Dapper is built using dapper so the following is a decent example
 
 ```sh
-go get github.com/rancher/dapper
+go install github.com/rancher/dapper@latest # install dapper executable
 git clone https://github.com/rancher/dapper.git
 cd dapper
 dapper
@@ -29,8 +29,8 @@ dapper
 This is the `Dockerfile.dapper` used
 
 ```Dockerfile
-FROM golang:1.15
-RUN go get github.com/tools/godep
+FROM golang:1.17
+RUN go install github.com/tools/godep@latest
 ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper
 ENV DAPPER_OUTPUT bin
 WORKDIR ${DAPPER_SOURCE}
