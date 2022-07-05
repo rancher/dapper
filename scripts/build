@@ -8,8 +8,9 @@ cd "$(dirname $0)"/..
 mkdir -p bin
 
 if [ "$CROSS" = 1 ]; then
-    CGO_ENABLED=0 GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-x86_64 main.go
-    CGO_ENABLED=0 GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
+    CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-x86_64 main.go
+    CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Windows-x86_64.exe main.go
+    CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -ldflags "-X main.VERSION=$VERSION"  -o ./bin/dapper-Darwin-arm64 main.go
     CGO_ENABLED=0 GOARCH=arm64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm64 main.go
     CGO_ENABLED=0 GOARCH=ppc64le go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-ppc64le main.go
     CGO_ENABLED=0 GOARCH=s390x go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-s390x main.go
