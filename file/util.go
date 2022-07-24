@@ -1,11 +1,13 @@
 package file
 
 import (
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"math/rand"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -37,7 +39,8 @@ func toMap(str string) map[string]string {
 }
 
 func (d *Dapperfile) tempfile(content []byte) (string, error) {
-	tempfile, err := ioutil.TempFile(".", d.File)
+	dir, base := filepath.Dir(d.File), filepath.Base(d.File)
+	tempfile, err := ioutil.TempFile(dir, base)
 	if err != nil {
 		return "", err
 	}
