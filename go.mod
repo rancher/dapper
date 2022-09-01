@@ -1,6 +1,6 @@
 module github.com/rancher/dapper
 
-go 1.17
+go 1.19
 
 require (
 	github.com/mattn/go-isatty v0.0.12
@@ -14,6 +14,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/golang:1.17
+FROM golang:1.19.0-buster
 
 ARG DAPPER_HOST_ARCH="amd64"
 ENV ARCH=${DAPPER_HOST_ARCH}
@@ -7,13 +7,20 @@ ARG http_proxy=$http_proxy
 ARG https_proxy=$https_proxy
 ARG no_proxy=$no_proxy
 
-RUN zypper -n install curl bash git jq docker
-RUN zypper clean -a
+RUN apt-get update && \
+    apt-get install -y apt-transport-https ca-certificates
+
+RUN wget -O - https://download.docker.com/linux/debian/gpg | apt-key add - && \
+    echo "deb [arch=${ARCH}] https://download.docker.com/linux/debian buster stable" >> /etc/apt/sources.list && \
+    cat /etc/apt/sources.list
 
 
 RUN if [[ "${ARCH}" == "amd64" ]]; then \
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.44.0; \
     fi
+
+RUN apt-get update && \
+    apt-get install -y docker-ce bash git jq
 
 ENV DOCKER_CLI_EXPERMENTAL enabled
 ENV DAPPER_SOURCE /go/src/github.com/rancher/dapper

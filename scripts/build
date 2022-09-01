@@ -14,6 +14,7 @@ if [ "$CROSS" = 1 ]; then
     CGO_ENABLED=0 GOARCH=arm64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm64 main.go
     CGO_ENABLED=0 GOARCH=ppc64le go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-ppc64le main.go
     CGO_ENABLED=0 GOARCH=s390x go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-s390x main.go
+    CGO_ENABLED=0 GOARCH=loong64 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-loong64 main.go
     CGO_ENABLED=0 GOARCH=arm GOARM=6 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-arm main.go
     CGO_ENABLED=0 GOARCH=arm GOARM=6 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-armv6l main.go
     CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -a -tags netgo -installsuffix netgo -ldflags "-X main.VERSION=$VERSION" -o ./bin/dapper-Linux-armv7l main.go
