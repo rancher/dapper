@@ -97,6 +97,10 @@ func main() {
 			Name:  "target",
 			Usage: "The multistage build target to use",
 		},
+		cli.StringFlag{
+			Name:  "secret",
+			Usage: " Secret to expose to the build (format: id=mysecret[,src=/local/secret])",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		exit(run(c))
@@ -131,6 +135,7 @@ func run(c *cli.Context) error {
 	dapperFile.NoContext = c.Bool("no-context")
 	dapperFile.MountSuffix = c.String("mount-suffix")
 	dapperFile.Target = c.String("target")
+	dapperFile.Secret = c.String("secret")
 
 	if shell {
 		return dapperFile.Shell(c.Args())
