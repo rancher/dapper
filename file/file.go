@@ -40,6 +40,7 @@ type Dapperfile struct {
 	NoContext   bool
 	MountSuffix string
 	Target      string
+	Network     string
 }
 
 func Lookup(file string) (*Dapperfile, error) {
@@ -251,6 +252,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 
 	for _, v := range d.Args {
 		buildArgs = append(buildArgs, "--build-arg", v)
+	}
+
+	if d.Network != "" {
+		buildArgs = append(buildArgs, "--network", d.Network)
 	}
 
 	if d.NoContext {
