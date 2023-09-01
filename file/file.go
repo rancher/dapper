@@ -364,7 +364,11 @@ func (d *Dapperfile) tag() string {
 	}
 	tag = re.ReplaceAllLiteralString(tag, "-")
 
-	return fmt.Sprintf("%s:%s", cwd, tag)
+	cwd = strings.TrimSpace(cwd)
+	reg := regexp.MustCompile(`[\W|_]{1,}`)
+	img := reg.ReplaceAllString(cwd, "-")
+
+	return fmt.Sprintf("%s:%s", img, tag)
 }
 
 func (d *Dapperfile) run(args ...string) error {
