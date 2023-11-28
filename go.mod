@@ -1,6 +1,6 @@
 module github.com/rancher/dapper
 
-go 1.17
+go 1.20
 
 require (
 	github.com/mattn/go-isatty v0.0.12

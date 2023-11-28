@@ -1,4 +1,4 @@
-FROM golang:1.17-windowsservercore
+FROM golang:1.20-windowsservercore
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 RUN pushd c:\; \

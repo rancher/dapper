@@ -1,17 +1,18 @@
 package file
 
 import (
-	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 }
 
 func randString() string {
@@ -37,7 +38,7 @@ func toMap(str string) map[string]string {
 }
 
 func (d *Dapperfile) tempfile(content []byte) (string, error) {
-	tempfile, err := ioutil.TempFile(".", d.File)
+	tempfile, err := os.CreateTemp(".", d.File)
 	if err != nil {
 		return "", err
 	}
