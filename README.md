@@ -108,7 +108,11 @@ Setting `DAPPER_DOCKER_SOCKET` will cause the Docker socket to be bind mounted i
 
 ### DAPPER_RUN_ARGS
 
-`DAPPER_RUN_ARGS` is used to add any parameters to the Docker `run` command for the build container.  For example you may want to set `--privileged` if you need to do advanced operations as root.
+`DAPPER_RUN_ARGS` is used to add any parameters to the Docker `run` command for the build container.  For example, you may want to set `--privileged` if you need to do advanced operations as root.
+
+### DAPPER_BUILD_ARGS
+
+`DAPPER_BUILD_ARGS` is used to add any parameters to the Docker `build` command for the build container.  For example, you may want to set `--no-cache` if you do not use cache when building the image.
 
 ### DAPPER_ENV
 
