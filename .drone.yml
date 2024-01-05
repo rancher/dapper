@@ -9,7 +9,7 @@ platform:
 
 steps:
   - name: dapper
-    image: registry.suse.com/bci/golang:1.17
+    image: registry.suse.com/bci/golang:1.21
     privileged: true
     commands:
       - go build -mod vendor -o dapper

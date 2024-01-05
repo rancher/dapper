@@ -93,3 +93,17 @@ func (c Context) RunArgs() []string {
 	}
 	return []string{}
 }
+
+func (c Context) BuildArgs() []string {
+	if v, ok := c["DAPPER_BUILD_ARGS"]; ok {
+		ret := []string{}
+		for _, i := range strings.Split(v, " ") {
+			i = strings.TrimSpace(i)
+			if i != "" {
+				ret = append(ret, i)
+			}
+		}
+		return ret
+	}
+	return []string{}
+}

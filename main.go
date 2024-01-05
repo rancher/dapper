@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rancher/dapper/file"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+
+	"github.com/rancher/dapper/file"
 )
 
 var (
@@ -36,8 +37,9 @@ func main() {
 	DAPPER_CP              The location in the host to find the source
 	DAPPER_OUTPUT          The files you want copied to the host in CP mode
 	DAPPER_DOCKER_SOCKET   Whether the Docker socket should be bound in
-	DAPPER_RUN_ARGS        Args to add to the docker run command when building
-	DAPPER_ENV             Env vars that should be copied into the build`
+	DAPPER_ENV             Env vars that should be copied into the build
+	DAPPER_RUN_ARGS        Args to add to the docker run command when running the build container
+	DAPPER_BUILD_ARGS      Args to add to the docker build command when building the build image`
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{

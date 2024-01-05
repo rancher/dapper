@@ -236,7 +236,10 @@ func (d *Dapperfile) build(args []string, copy bool) (string, error) {
 
 	tag := d.tag()
 	logrus.Debugf("Building %s using %s", tag, d.File)
+
 	buildArgs := []string{"build"}
+	buildArgs = append(buildArgs, d.env.BuildArgs()...)
+
 	if len(args) == 0 {
 		buildArgs = append(buildArgs, "-t", tag)
 	}
